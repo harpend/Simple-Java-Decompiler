@@ -207,11 +207,11 @@ public class ClassReader {
                         // u1 tag, u2 length, u1 bytes[length]
                         byte[] lengthBytes = new byte[2];
                         fis.read(lengthBytes);
-                        int lengthInt = ByteBuffer.wrap(lengthBytes).getInt();
-                        byte[] bytesBytes3 = new byte[lengthInt];
+                        Short lengthShort = ByteBuffer.wrap(lengthBytes).getShort();
+                        byte[] bytesBytes3 = new byte[lengthShort];
                         fis.read(bytesBytes3);
                         String bytes3 = new String(bytesBytes3, StandardCharsets.UTF_8);
-                        String length = String.valueOf(lengthInt);
+                        String length = String.valueOf(lengthShort);
                         element.put("tag", "CONSTANT_Utf8");
                         element.put("length", length);
                         element.put("bytes", bytes3);

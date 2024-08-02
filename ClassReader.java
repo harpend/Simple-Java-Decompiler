@@ -1,11 +1,9 @@
 import java.io.FileInputStream;
-import java.io.RandomAccessFile;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
@@ -15,6 +13,13 @@ public class ClassReader {
     private int minorVer;
     private int majorVer;
     private int constantPoolCount;
+    private int thisClass;
+    private int superClass;
+    private int interfacesCount;
+    private FileInputStream fis;
+
+    public List<Dictionary<String, String>> constantPool; 
+    public List<String> accessFlags;
 
     static final int CONSTANT_Class = 7;
     static final int CONSTANT_Fieldref = 9;
@@ -31,8 +36,8 @@ public class ClassReader {
     static final int CONSTANT_MethodType = 16;
     static final int CONSTANT_InvokeDynamic = 18;
     
-    public void readClass(String path){
-        try (FileInputStream fis = new FileInputStream(path)){
+    public void readConstantPool(String path) throws IOException{
+            fis = new FileInputStream(path);
             byte[] magicNumBytes = new byte[4];
             byte[] minorVerBytes = new byte[2];
             byte[] majorVerBytes = new byte[2];
@@ -218,12 +223,71 @@ public class ClassReader {
                         list.add(element);
                         break;
                     default:
+                        System.out.println("Undefined CP type");
                         break;
                 }
             }
-        } catch (Exception e) {
+            constantPool = list;
+            
+
+        
+    }
+
+    private void readInterfaces() throws IOException {
+        // thisClass and superClass refer to the entries in the constant pool
+        byte[] accessFlagsBytes = new byte[2];
+        byte[] thisClassBytes = new byte[2];
+        byte[] superClassBytes = new byte[2];
+        byte[] interfacesCountBytes = new byte[2];
+
+        fis.read(accessFlagsBytes);
+        fis.read(thisClassBytes);
+        fis.read(superClassBytes);
+        fis.read(interfacesCountBytes);
+
+        int flags = ByteBuffer.wrap(accessFlagsBytes).getShort();   
+        this.thisClass = ByteBuffer.wrap(thisClassBytes).getShort();   
+        this.superClass = ByteBuffer.wrap(superClassBytes).getShort();   
+        this.interfacesCount = ByteBuffer.wrap(interfacesCountBytes).getShort();  
+
+        this.accessFlags = new ArrayList<String> ();
+        
+        calcAccessFlags(flags);
+    }
+
+    private void calcAccessFlags(int flags) {
+        if ((flags & 0x0001) != 0) {
+            this.accessFlags.add("public");
+        }
+        if ((flags & 0x0010) != 0) {
+            this.accessFlags.add("final");
+        }
+        if ((flags & 0x0020) != 0) {
+            this.accessFlags.add("super");
+        }
+        if ((flags & 0x0200) != 0) {
+            this.accessFlags.add("interface");
+        }
+        if ((flags & 0x0400) != 0) {
+            this.accessFlags.add("abstract");
+        }
+        if ((flags & 0x1000) != 0) {
+            this.accessFlags.add("synthetic");
+        }
+        if ((flags & 0x2000) != 0) {
+            this.accessFlags.add("annotation");
+        }
+        if ((flags & 0x4000) != 0) {
+            this.accessFlags.add("enum");
+        }
+    }
+
+    public void ReadClass(String path) {
+        try {
+            readConstantPool(path);
+            readInterfaces();
+        } catch (IOException e) {
             e.printStackTrace();
         }
-    
     }
 }

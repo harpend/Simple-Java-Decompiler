@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
+import jdk.jfr.Unsigned;
 
 public class ClassReader {
     private int magicNum;
@@ -20,6 +21,7 @@ public class ClassReader {
 
     public List<Dictionary<String, String>> constantPool; 
     public List<String> accessFlags;
+    public List<Integer> interfaces;
 
     static final int CONSTANT_Class = 7;
     static final int CONSTANT_Fieldref = 9;
@@ -252,40 +254,109 @@ public class ClassReader {
 
         this.accessFlags = new ArrayList<String> ();
         
-        calcAccessFlags(flags);
+        this.accessFlags = calcAccessFlags(flags);
+
+        this.interfaces = new ArrayList<Integer>(this.interfacesCount);
+        for (int i = 0; i < this.interfacesCount; i++) {
+            byte[] interBytes = new byte[2];
+            fis.read(interBytes);
+            int interfac = ByteBuffer.wrap(interBytes).getShort();
+            this.interfaces.add(interfac);
+        }
     }
 
-    private void calcAccessFlags(int flags) {
+    private void readFields() throws IOException {
+        byte[] fieldsCountBytes = new byte[2];
+
+        fis.read(fieldsCountBytes);
+
+        int fieldsCount = ByteBuffer.wrap(fieldsCountBytes).getShort();
+        List<Dictionary<String, Object>> list = new ArrayList<Dictionary<String, Object>> (); 
+
+        byte[] accessFlagsBytes = new byte[2];
+        byte[] nameIndexBytes = new byte[2];
+        byte[] descriptorIndexBytes = new byte[2];
+        byte[] attributesCountBytes = new byte[2];
+        for (int i = 0; i < fieldsCount; i++) {
+            Dictionary<String, Object> element = new Hashtable<>();
+            fis.read(accessFlagsBytes);
+            fis.read(nameIndexBytes);
+            fis.read(descriptorIndexBytes);
+            fis.read(attributesCountBytes);
+
+            int flags = ByteBuffer.wrap(accessFlagsBytes).getShort();
+            int nameIndex = ByteBuffer.wrap(nameIndexBytes).getShort();
+            int descriptorIndex = ByteBuffer.wrap(descriptorIndexBytes).getShort();
+            int attributesCount = ByteBuffer.wrap(attributesCountBytes).getShort();
+            
+            List<String> accessFlags = calcAccessFlags(flags);
+
+            element.put("access_flags", accessFlags);
+            element.put("name_index", nameIndex);
+            element.put("descriptor_index", descriptorIndex);
+            element.put("attirbutes_count", attributesCount);
+
+            List<Dictionary<String, Object>> attrList = new ArrayList<Dictionary<String, Object>> (); 
+            byte[] attributeNameIndexBytes = new byte[2];
+            byte[] attributeLengthBytes = new byte[4];
+            for (int j = 0; j < attributesCount; j++) {
+                Dictionary<String, Object> el = new Hashtable<>();
+                fis.read(attributeNameIndexBytes);
+                fis.read(attributeLengthBytes);
+
+                int attributeNameIndex = ByteBuffer.wrap(attributeNameIndexBytes).getShort();
+                int attributeLength = ByteBuffer.wrap(attributeLengthBytes).getInt();
+
+                byte[] infoBytes = new byte[attributeLength];
+                fis.read(infoBytes);
+                String info = new String(infoBytes, StandardCharsets.UTF_8);
+
+                el.put("attribute_name_index", attributeNameIndex);
+                el.put("attribute_length", attributeLength);
+                el.put("info", info);
+                attrList.add(el);
+            }
+
+            element.put("attributes", attrList);
+            list.add(element);
+        }
+    }
+
+    private List<String> calcAccessFlags(int flags) {
+        List<String> afList = new ArrayList<String>();
         if ((flags & 0x0001) != 0) {
-            this.accessFlags.add("public");
+            afList.add("public");
         }
         if ((flags & 0x0010) != 0) {
-            this.accessFlags.add("final");
+            afList.add("final");
         }
         if ((flags & 0x0020) != 0) {
-            this.accessFlags.add("super");
+            afList.add("super");
         }
         if ((flags & 0x0200) != 0) {
-            this.accessFlags.add("interface");
+            afList.add("interface");
         }
         if ((flags & 0x0400) != 0) {
-            this.accessFlags.add("abstract");
+            afList.add("abstract");
         }
         if ((flags & 0x1000) != 0) {
-            this.accessFlags.add("synthetic");
+            afList.add("synthetic");
         }
         if ((flags & 0x2000) != 0) {
-            this.accessFlags.add("annotation");
+            afList.add("annotation");
         }
         if ((flags & 0x4000) != 0) {
-            this.accessFlags.add("enum");
+            afList.add("enum");
         }
+
+        return afList;
     }
 
     public void ReadClass(String path) {
         try {
             readConstantPool(path);
             readInterfaces();
+            readFields();
         } catch (IOException e) {
             e.printStackTrace();
         }

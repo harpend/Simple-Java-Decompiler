@@ -22,6 +22,8 @@ public class ClassReader {
     public List<Dictionary<String, String>> constantPool; 
     public List<String> accessFlags;
     public List<Integer> interfaces;
+    public List<Dictionary<String, Object>> fields;
+    public List<Dictionary<String, Object>> methods;
 
     static final int CONSTANT_Class = 7;
     static final int CONSTANT_Fieldref = 9;
@@ -228,8 +230,12 @@ public class ClassReader {
                         System.out.println("Undefined CP type");
                         break;
                 }
+                System.out.print(i+1);
+                System.out.println(element);
+
             }
-            constantPool = list;
+            this.constantPool = list;
+
             
 
         
@@ -320,6 +326,78 @@ public class ClassReader {
             element.put("attributes", attrList);
             list.add(element);
         }
+
+        this.fields = list;
+        if (!list.isEmpty()) {
+            System.out.println("\nfields:\n");
+            System.out.println(list);
+            System.out.println("this has not been tested make sure it is correct");
+        }
+    }
+
+    private void readMethods() throws IOException {
+        byte[] methodsCountBytes = new byte[2];
+
+        fis.read(methodsCountBytes);
+
+        int methodsCount = ByteBuffer.wrap(methodsCountBytes).getShort();
+
+        List<Dictionary<String, Object>> list = new ArrayList<Dictionary<String, Object>> (); 
+
+        byte[] accessFlagsBytes = new byte[2];
+        byte[] nameIndexBytes = new byte[2];
+        byte[] descriptorIndexBytes = new byte[2];
+        byte[] attributesCountBytes = new byte[2];
+        for (int i = 0; i < methodsCount; i++) {
+            Dictionary<String, Object> element = new Hashtable<>();
+            fis.read(accessFlagsBytes);
+            fis.read(nameIndexBytes);
+            fis.read(descriptorIndexBytes);
+            fis.read(attributesCountBytes);
+
+            int flags = ByteBuffer.wrap(accessFlagsBytes).getShort();
+            int nameIndex = ByteBuffer.wrap(nameIndexBytes).getShort();
+            int descriptorIndex = ByteBuffer.wrap(descriptorIndexBytes).getShort();
+            int attributesCount = ByteBuffer.wrap(attributesCountBytes).getShort();
+            
+            List<String> accessFlags = calcAccessFlags(flags);
+
+            element.put("access_flags", accessFlags);
+            element.put("name_index", nameIndex);
+            element.put("descriptor_index", descriptorIndex);
+            element.put("attirbutes_count", attributesCount);
+
+            List<Dictionary<String, Object>> attrList = new ArrayList<Dictionary<String, Object>> (); 
+            byte[] attributeNameIndexBytes = new byte[2];
+            byte[] attributeLengthBytes = new byte[4];
+            for (int j = 0; j < attributesCount; j++) {
+                Dictionary<String, Object> el = new Hashtable<>();
+                fis.read(attributeNameIndexBytes);
+                fis.read(attributeLengthBytes);
+
+                int attributeNameIndex = ByteBuffer.wrap(attributeNameIndexBytes).getShort();
+                int attributeLength = ByteBuffer.wrap(attributeLengthBytes).getInt();
+
+                byte[] infoBytes = new byte[attributeLength];
+                fis.read(infoBytes);
+                String info = new String(infoBytes, StandardCharsets.UTF_8);
+
+                el.put("attribute_name_index", attributeNameIndex);
+                el.put("attribute_length", attributeLength);
+                el.put("info", info);
+                attrList.add(el);
+            }
+
+            element.put("attributes", attrList);
+            list.add(element);
+        }
+
+        this.methods = list;
+        if (!list.isEmpty()) {
+            System.out.println("\nmethods:\n");
+            System.out.println(list);
+            System.out.println("this has not been tested make sure it is correct");
+        }
     }
 
     private List<String> calcAccessFlags(int flags) {
@@ -354,9 +432,11 @@ public class ClassReader {
 
     public void ReadClass(String path) {
         try {
+            System.out.println("Reading class file...");
             readConstantPool(path);
             readInterfaces();
             readFields();
+            readMethods();
         } catch (IOException e) {
             e.printStackTrace();
         }

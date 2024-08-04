@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
@@ -306,27 +307,12 @@ public class ClassReader {
             element.put("access_flags", accessFlags);
             element.put("name_index", nameIndex);
             element.put("descriptor_index", descriptorIndex);
-            element.put("attirbutes_count", attributesCount);
+            element.put("attributes_count", attributesCount);
 
-            List<Dictionary<String, Object>> attrList = new ArrayList<Dictionary<String, Object>> (); 
-            byte[] attributeNameIndexBytes = new byte[2];
-            byte[] attributeLengthBytes = new byte[4];
-            for (int j = 0; j < attributesCount; j++) {
-                Dictionary<String, Object> el = new Hashtable<>();
-                fis.read(attributeNameIndexBytes);
-                fis.read(attributeLengthBytes);
+            List<Dictionary<String, Object>> attrList = parseAttr(attributesCount);
 
-                int attributeNameIndex = ByteBuffer.wrap(attributeNameIndexBytes).getShort();
-                int attributeLength = ByteBuffer.wrap(attributeLengthBytes).getInt();
-
-                byte[] infoBytes = new byte[attributeLength];
-                fis.read(infoBytes);
-
-                el.put("attribute_name_index", attributeNameIndex);
-                el.put("attribute_length", attributeLength);
-                el.put("info", infoBytes);
-                attrList.add(el);
-            }
+            element.put("attributes", attrList);
+            list.add(element);
 
             element.put("attributes", attrList);
             list.add(element);
@@ -369,27 +355,9 @@ public class ClassReader {
             element.put("access_flags", accessFlags);
             element.put("name_index", nameIndex);
             element.put("descriptor_index", descriptorIndex);
-            element.put("attirbutes_count", attributesCount);
+            element.put("attributes_count", attributesCount);
 
-            List<Dictionary<String, Object>> attrList = new ArrayList<Dictionary<String, Object>> (); 
-            byte[] attributeNameIndexBytes = new byte[2];
-            byte[] attributeLengthBytes = new byte[4];
-            for (int j = 0; j < attributesCount; j++) {
-                Dictionary<String, Object> el = new Hashtable<>();
-                fis.read(attributeNameIndexBytes);
-                fis.read(attributeLengthBytes);
-
-                int attributeNameIndex = ByteBuffer.wrap(attributeNameIndexBytes).getShort();
-                int attributeLength = ByteBuffer.wrap(attributeLengthBytes).getInt();
-
-                byte[] infoBytes = new byte[attributeLength];
-                fis.read(infoBytes);
-
-                el.put("attribute_name_index", attributeNameIndex);
-                el.put("attribute_length", attributeLength);
-                el.put("info", infoBytes);
-                attrList.add(el);
-            }
+            List<Dictionary<String, Object>> attrList = parseAttr(attributesCount);
 
             element.put("attributes", attrList);
             list.add(element);
@@ -409,30 +377,10 @@ public class ClassReader {
 
         int attributesCount = ByteBuffer.wrap(attributesCountBytes).getShort();
 
-        List<Dictionary<String, Object>> attrList = new ArrayList<Dictionary<String, Object>> (); 
-        byte[] attributeNameIndexBytes = new byte[2];
-        byte[] attributeLengthBytes = new byte[4];
-        for (int j = 0; j < attributesCount; j++) {
-            Dictionary<String, Object> el = new Hashtable<>();
-            fis.read(attributeNameIndexBytes);
-            fis.read(attributeLengthBytes);
-
-            int attributeNameIndex = ByteBuffer.wrap(attributeNameIndexBytes).getShort();
-            int attributeLength = ByteBuffer.wrap(attributeLengthBytes).getInt();
-
-            byte[] infoBytes = new byte[attributeLength];
-            fis.read(infoBytes);
-
-            el.put("attribute_name_index", attributeNameIndex);
-            el.put("attribute_length", attributeLength);
-            el.put("info", infoBytes);
-            attrList.add(el);
-        }
-
-        this.attributes = attrList;
-        if (!attrList.isEmpty()) {
+        this.attributes = parseAttr(attributesCount);
+        if (!this.attributes.isEmpty()) {
             System.out.println("\nattributes:\n");
-            System.out.println(attrList);
+            System.out.println(this.attributes);
         }
     }
 
@@ -487,6 +435,30 @@ public class ClassReader {
         return afList;
     }
 
+    private List<Dictionary<String, Object>> parseAttr(int attrCount) throws IOException {
+        List<Dictionary<String, Object>> attrList = new ArrayList<Dictionary<String, Object>> (); 
+        byte[] attributeNameIndexBytes = new byte[2];
+        byte[] attributeLengthBytes = new byte[4];
+        for (int j = 0; j < attrCount; j++) {
+            Dictionary<String, Object> el = new Hashtable<>();
+            fis.read(attributeNameIndexBytes);
+            fis.read(attributeLengthBytes);
+
+            int attributeNameIndex = ByteBuffer.wrap(attributeNameIndexBytes).getShort();
+            int attributeLength = ByteBuffer.wrap(attributeLengthBytes).getInt();
+
+            byte[] infoBytes = new byte[attributeLength];
+            fis.read(infoBytes);
+
+            el.put("attribute_name_index", attributeNameIndex);
+            el.put("attribute_length", attributeLength);
+            el.put("info", infoBytes);
+            attrList.add(el);
+        }
+
+        return attrList;
+    }
+
     public void ReadClass(String path) {
         try {
             System.out.println("Reading class file...");
@@ -495,6 +467,28 @@ public class ClassReader {
             readFields();
             readMethods();
             readAttributes();
+
+            System.out.println("\nmethods names:\n");
+            for (int i = 0; i < this.methods.size(); i++) {
+               Dictionary<String, Object> method = this.methods.get(i);
+               int nameIndex = (int)method.get("name_index");
+               Dictionary<String, String> cpEntry = this.constantPool.get(nameIndex - 1);
+               System.out.println(cpEntry.get("bytes"));
+               List<Dictionary<String, Object>> attrs = (List<Dictionary<String, Object>>) method.get("attributes");
+               for (int j = 0; j < attrs.size(); j++) {
+                    Dictionary<String, Object> attr = attrs.get(j);
+                    int attributeNameIndex = (int) attr.get("attribute_name_index");
+                    cpEntry = this.constantPool.get(attributeNameIndex - 1);
+                    if (Arrays.equals(cpEntry.get("bytes").getBytes(StandardCharsets.UTF_8), "Code".getBytes(StandardCharsets.UTF_8))) {
+                        byte[] code = (byte[]) attr.get("info");
+                        System.out.print("\t");
+                        for (byte b : code) {
+                            System.out.print(String.format("0x%02X ", b));
+                        }
+                        System.out.println();
+                    }
+               }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

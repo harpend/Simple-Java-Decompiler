@@ -24,6 +24,7 @@ public class ClassReader {
     public List<Integer> interfaces;
     public List<Dictionary<String, Object>> fields;
     public List<Dictionary<String, Object>> methods;
+    public List<Dictionary<String, Object>> attributes;
 
     static final int CONSTANT_Class = 7;
     static final int CONSTANT_Fieldref = 9;
@@ -269,6 +270,11 @@ public class ClassReader {
             int interfac = ByteBuffer.wrap(interBytes).getShort();
             this.interfaces.add(interfac);
         }
+
+        if (!this.interfaces.isEmpty()) {
+            System.out.println("\ninterfaces:\n");
+            System.out.println(this.interfaces);
+        }
     }
 
     private void readFields() throws IOException {
@@ -315,11 +321,10 @@ public class ClassReader {
 
                 byte[] infoBytes = new byte[attributeLength];
                 fis.read(infoBytes);
-                String info = new String(infoBytes, StandardCharsets.UTF_8);
 
                 el.put("attribute_name_index", attributeNameIndex);
                 el.put("attribute_length", attributeLength);
-                el.put("info", info);
+                el.put("info", infoBytes);
                 attrList.add(el);
             }
 
@@ -331,7 +336,6 @@ public class ClassReader {
         if (!list.isEmpty()) {
             System.out.println("\nfields:\n");
             System.out.println(list);
-            System.out.println("this has not been tested make sure it is correct");
         }
     }
 
@@ -380,11 +384,10 @@ public class ClassReader {
 
                 byte[] infoBytes = new byte[attributeLength];
                 fis.read(infoBytes);
-                String info = new String(infoBytes, StandardCharsets.UTF_8);
 
                 el.put("attribute_name_index", attributeNameIndex);
                 el.put("attribute_length", attributeLength);
-                el.put("info", info);
+                el.put("info", infoBytes);
                 attrList.add(el);
             }
 
@@ -396,7 +399,40 @@ public class ClassReader {
         if (!list.isEmpty()) {
             System.out.println("\nmethods:\n");
             System.out.println(list);
-            System.out.println("this has not been tested make sure it is correct");
+        }
+    }
+
+    private void readAttributes() throws IOException {
+        byte[] attributesCountBytes = new byte[2];
+
+        fis.read(attributesCountBytes);
+
+        int attributesCount = ByteBuffer.wrap(attributesCountBytes).getShort();
+
+        List<Dictionary<String, Object>> attrList = new ArrayList<Dictionary<String, Object>> (); 
+        byte[] attributeNameIndexBytes = new byte[2];
+        byte[] attributeLengthBytes = new byte[4];
+        for (int j = 0; j < attributesCount; j++) {
+            Dictionary<String, Object> el = new Hashtable<>();
+            fis.read(attributeNameIndexBytes);
+            fis.read(attributeLengthBytes);
+
+            int attributeNameIndex = ByteBuffer.wrap(attributeNameIndexBytes).getShort();
+            int attributeLength = ByteBuffer.wrap(attributeLengthBytes).getInt();
+
+            byte[] infoBytes = new byte[attributeLength];
+            fis.read(infoBytes);
+
+            el.put("attribute_name_index", attributeNameIndex);
+            el.put("attribute_length", attributeLength);
+            el.put("info", infoBytes);
+            attrList.add(el);
+        }
+
+        this.attributes = attrList;
+        if (!attrList.isEmpty()) {
+            System.out.println("\nattributes:\n");
+            System.out.println(attrList);
         }
     }
 
@@ -405,17 +441,38 @@ public class ClassReader {
         if ((flags & 0x0001) != 0) {
             afList.add("public");
         }
+        if ((flags & 0x0002) != 0) {
+            afList.add("private");
+        }
+        if ((flags & 0x0004) != 0) {
+            afList.add("protected");
+        }
+        if ((flags & 0x0008) != 0) {
+            afList.add("static");
+        }
         if ((flags & 0x0010) != 0) {
             afList.add("final");
         }
         if ((flags & 0x0020) != 0) {
             afList.add("super");
         }
+        if ((flags & 0x0040) != 0) {
+            afList.add("bridge");
+        }
+        if ((flags & 0x0080) != 0) {
+            afList.add("varargs");
+        }
+        if ((flags & 0x0100) != 0) {
+            afList.add("native");
+        }
         if ((flags & 0x0200) != 0) {
             afList.add("interface");
         }
         if ((flags & 0x0400) != 0) {
             afList.add("abstract");
+        }
+        if ((flags & 0x0800) != 0) {
+            afList.add("strict");
         }
         if ((flags & 0x1000) != 0) {
             afList.add("synthetic");
@@ -437,6 +494,7 @@ public class ClassReader {
             readInterfaces();
             readFields();
             readMethods();
+            readAttributes();
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -1,6 +1,7 @@
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -446,17 +447,169 @@ public class ClassReader {
 
             int attributeNameIndex = ByteBuffer.wrap(attributeNameIndexBytes).getShort();
             int attributeLength = ByteBuffer.wrap(attributeLengthBytes).getInt();
+            Dictionary<String, Object> codeInfo = null;
+            if (Arrays.equals(resolveNameIndex(attributeNameIndex), "Code".getBytes(StandardCharsets.UTF_8))) {
+                codeInfo = parseCode();
+            }
+            else if (Arrays.equals(resolveNameIndex(attributeNameIndex), "LineNumberTable".getBytes(StandardCharsets.UTF_8))) {
+
+            }
+            else {
+                System.out.println("attribute type not implemented");
+                System.out.println(new String(resolveNameIndex(attributeNameIndex), StandardCharsets.UTF_8));
+            }
 
             byte[] infoBytes = new byte[attributeLength];
             fis.read(infoBytes);
 
             el.put("attribute_name_index", attributeNameIndex);
             el.put("attribute_length", attributeLength);
-            el.put("info", infoBytes);
+            el.put("info", codeInfo);
             attrList.add(el);
         }
 
         return attrList;
+    }
+
+    private byte[] resolveNameIndex(int entry) {
+        Dictionary<String, String> cpEntry = this.constantPool.get(entry - 1);
+        return cpEntry.get("bytes").getBytes();
+    }
+
+    private Dictionary<String, Object> parseCode() throws IOException {
+        Dictionary<String, Object> codeDict = new Hashtable<>();
+        byte[] maxStackBytes = new byte[2];
+        byte[] maxLocalsBytes = new byte[2];
+        byte[] codeLengthBytes = new byte[4];
+
+        fis.read(maxStackBytes);
+        fis.read(maxLocalsBytes);
+        fis.read(codeLengthBytes);
+
+        int maxStack = ByteBuffer.wrap(maxStackBytes).getShort();
+        int maxLocals = ByteBuffer.wrap(maxLocalsBytes).getShort();
+        int codeLength = ByteBuffer.wrap(codeLengthBytes).getInt();
+
+        byte[] codeBytes = new byte[codeLength];
+
+        fis.read(codeBytes);
+
+        List<String> codeEl = new ArrayList<String>();
+        byte[] b1 = new byte[1];
+        byte[] b2 = new byte[2];
+        for (int i = 0; i < codeLength; i++) {
+            byte b = codeBytes[i];
+            switch (b) {
+            case (byte)0x00:
+                codeEl.add("nop");
+                break;
+            case (byte)0x01:
+                codeEl.add("aconst_null");
+                break;
+            case (byte)0x02:
+                codeEl.add("iconst_m1");
+                break;
+            case (byte)0x03:
+                codeEl.add("iconst_0");
+                break;
+            case (byte)0x04:
+                codeEl.add("iconst_1");
+                break;
+            case (byte)0x05:
+                codeEl.add("iconst_2");
+                break;
+            case (byte)0x06:
+                codeEl.add("iconst_3");
+                break;
+            case (byte)0x07:
+                codeEl.add("iconst_4");
+                break;
+            case (byte)0x08:
+                codeEl.add("iconst_5");
+                break;
+            case (byte)0x09:
+                codeEl.add("lconst_0");
+                break;
+            case (byte)0x0A:
+                codeEl.add("lconst_1");
+                break;
+            case (byte)0x0D:
+                codeEl.add("fconst_2");
+                break;
+            case (byte)0x0F:
+                codeEl.add("dconst_1");
+                break;
+            case (byte)0x12:
+                b1[0] = codeBytes[++i];
+                codeEl.add(concatByteToString("ldc ", b1));
+                break;
+            case (byte)0x18:
+                b1[0] = codeBytes[++i];
+                codeEl.add(concatByteToString("dload ", b1));
+                break;
+            case (byte)0x2a:
+                codeEl.add("aload_0");
+                break;
+            case (byte)0xb1:
+                codeEl.add("return");
+                break;    
+            case (byte)0xb2:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                codeEl.add(concatByteToString("getstatic ", b2));
+                break;    
+            case (byte)0xb6:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                codeEl.add(concatByteToString("invokevirtual ", b2));
+                break;    
+            case (byte)0xb7:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                codeEl.add(concatByteToString("invokespecial ", b2));
+                break;    
+            default:
+                System.out.println("Bytecode type not implemented yet");
+                System.out.println(b);
+                System.exit(1);
+            }
+        }
+
+        byte[] exceptionTableLengthBytes = new byte[2];
+        
+        fis.read(exceptionTableLengthBytes);
+        
+        int exceptionTableLength = ByteBuffer.wrap(exceptionTableLengthBytes).getShort();
+        
+        if (exceptionTableLength != 0) {
+            System.out.println("exceptions not implemented in code");
+            System.exit(1);
+        }
+
+        byte[] attributesCountBytes = new byte[2];
+
+        fis.read(attributesCountBytes);
+
+        int attributesCount = ByteBuffer.wrap(attributesCountBytes).getShort();
+        List<Dictionary<String, Object>> attr = null;
+        if (attributesCount != 0) {
+            attr = parseAttr(attributesCount);
+        }
+        codeDict.put("max_stack", maxStack);        
+        codeDict.put("max_locals", maxLocals);        
+        codeDict.put("code", codeEl);        
+        codeDict.put("attribute_info", attr);
+
+        return codeDict;
+    }
+
+    private String concatByteToString(String s, byte[] bytes) {
+        StringBuilder sb = new StringBuilder(s); // Use StringBuilder for efficient string concatenation
+        for (byte b : bytes) {
+            int intValue = Byte.toUnsignedInt(b);
+            sb.append(intValue);
+        }
+        return sb.toString();
     }
 
     public void ReadClass(String path) {
@@ -480,10 +633,10 @@ public class ClassReader {
                     int attributeNameIndex = (int) attr.get("attribute_name_index");
                     cpEntry = this.constantPool.get(attributeNameIndex - 1);
                     if (Arrays.equals(cpEntry.get("bytes").getBytes(StandardCharsets.UTF_8), "Code".getBytes(StandardCharsets.UTF_8))) {
-                        byte[] code = (byte[]) attr.get("info");
-                        System.out.print("\t");
-                        for (byte b : code) {
-                            System.out.print(String.format("0x%02X ", b));
+                        Dictionary<String, Object> codeInfo = (Dictionary<String, Object>) attr.get("info");
+                        List<String> code = (List<String>) codeInfo.get("code");
+                        for (String s : code) {
+                            System.out.print(String.format("\t%s\n", s));
                         }
                         System.out.println();
                     }

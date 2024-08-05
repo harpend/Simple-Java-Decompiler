@@ -452,7 +452,7 @@ public class ClassReader {
                 codeInfo = parseCode();
             }
             else if (Arrays.equals(resolveNameIndex(attributeNameIndex), "LineNumberTable".getBytes(StandardCharsets.UTF_8))) {
-
+                lineNumberTableInfo = parseLineNumberTable();
             }
             else {
                 System.out.println("attribute type not implemented");

@@ -358,9 +358,11 @@ public class ClassReader {
             element.put("descriptor_index", descriptorIndex);
             element.put("attributes_count", attributesCount);
 
-            List<Dictionary<String, Object>> attrList = parseAttr(attributesCount);
+            if (attributesCount != 0) {
+                List<Dictionary<String, Object>> attrList = parseAttr(attributesCount);
+                element.put("attributes", attrList);
+            }
 
-            element.put("attributes", attrList);
             list.add(element);
         }
 
@@ -447,24 +449,24 @@ public class ClassReader {
 
             int attributeNameIndex = ByteBuffer.wrap(attributeNameIndexBytes).getShort();
             int attributeLength = ByteBuffer.wrap(attributeLengthBytes).getInt();
+          
             Dictionary<String, Object> codeInfo = null;
+            Dictionary<String, Object> lineNumberTableInfo = null;
             if (Arrays.equals(resolveNameIndex(attributeNameIndex), "Code".getBytes(StandardCharsets.UTF_8))) {
                 codeInfo = parseCode();
+                el.put("info", codeInfo);
             }
             else if (Arrays.equals(resolveNameIndex(attributeNameIndex), "LineNumberTable".getBytes(StandardCharsets.UTF_8))) {
                 lineNumberTableInfo = parseLineNumberTable();
+                el.put("info", lineNumberTableInfo);
             }
             else {
                 System.out.println("attribute type not implemented");
                 System.out.println(new String(resolveNameIndex(attributeNameIndex), StandardCharsets.UTF_8));
             }
 
-            byte[] infoBytes = new byte[attributeLength];
-            fis.read(infoBytes);
-
             el.put("attribute_name_index", attributeNameIndex);
             el.put("attribute_length", attributeLength);
-            el.put("info", codeInfo);
             attrList.add(el);
         }
 
@@ -474,6 +476,38 @@ public class ClassReader {
     private byte[] resolveNameIndex(int entry) {
         Dictionary<String, String> cpEntry = this.constantPool.get(entry - 1);
         return cpEntry.get("bytes").getBytes();
+    }
+
+    private Dictionary<String, Object> parseLineNumberTable() throws IOException {
+            Dictionary<String, Object> lineNumberTableAttr = new Hashtable<>();
+
+            byte[] lineNumberTableLengthBytes = new byte[2];
+            fis.read(lineNumberTableLengthBytes);
+            int lineNumberTableLength = ByteBuffer.wrap(lineNumberTableLengthBytes).getShort();
+
+            List<Dictionary<String, Integer>> lineNumberTable = new ArrayList<>();
+
+            for (int i = 0; i < lineNumberTableLength; i++) {
+                Dictionary<String, Integer> lineNumberEntry = new Hashtable<>();
+
+                byte[] startPcBytes = new byte[2];
+                fis.read(startPcBytes);
+                int startPc = ByteBuffer.wrap(startPcBytes).getShort();
+
+                byte[] lineNumberBytes = new byte[2];
+                fis.read(lineNumberBytes);
+                int lineNumber = ByteBuffer.wrap(lineNumberBytes).getShort();
+
+                lineNumberEntry.put("start_pc", startPc);
+                lineNumberEntry.put("line_number", lineNumber);
+
+                lineNumberTable.add(lineNumberEntry);
+            }
+
+            lineNumberTableAttr.put("line_number_table_length", lineNumberTableLength);
+            lineNumberTableAttr.put("line_number_table", lineNumberTable);
+
+            return lineNumberTableAttr;
     }
 
     private Dictionary<String, Object> parseCode() throws IOException {

@@ -320,10 +320,7 @@ public class ClassReader {
         }
 
         this.fields = list;
-        if (!list.isEmpty()) {
-            System.out.println("\nfields:\n");
-            System.out.println(list);
-        }
+        System.out.println("fields parsed...");
     }
 
     private void readMethods() throws IOException {
@@ -367,10 +364,7 @@ public class ClassReader {
         }
 
         this.methods = list;
-        if (!list.isEmpty()) {
-            System.out.println("\nmethods:\n");
-            System.out.println(list);
-        }
+        System.out.println("methods parsed...");
     }
 
     private void readAttributes() throws IOException {
@@ -381,10 +375,7 @@ public class ClassReader {
         int attributesCount = ByteBuffer.wrap(attributesCountBytes).getShort();
 
         this.attributes = parseAttr(attributesCount);
-        if (!this.attributes.isEmpty()) {
-            System.out.println("\nattributes:\n");
-            System.out.println(this.attributes);
-        }
+        System.out.println("attributes parsed...");
     }
 
     private List<String> calcAccessFlags(int flags) {
@@ -452,6 +443,7 @@ public class ClassReader {
           
             Dictionary<String, Object> codeInfo = null;
             Dictionary<String, Object> lineNumberTableInfo = null;
+            Dictionary<String, Object> sourceFileInfo = null;
             if (Arrays.equals(resolveNameIndex(attributeNameIndex), "Code".getBytes(StandardCharsets.UTF_8))) {
                 codeInfo = parseCode();
                 el.put("info", codeInfo);
@@ -459,6 +451,12 @@ public class ClassReader {
             else if (Arrays.equals(resolveNameIndex(attributeNameIndex), "LineNumberTable".getBytes(StandardCharsets.UTF_8))) {
                 lineNumberTableInfo = parseLineNumberTable();
                 el.put("info", lineNumberTableInfo);
+            }
+            else if (Arrays.equals(resolveNameIndex(attributeNameIndex), "SourceFile".getBytes(StandardCharsets.UTF_8))) {
+                byte[] sf = new byte[2];
+                fis.read(sf);
+                int sfIndex = ByteBuffer.wrap(sf).getShort();
+                el.put("sourcefile_index", sfIndex);
             }
             else {
                 System.out.println("attribute type not implemented");
@@ -528,79 +526,79 @@ public class ClassReader {
 
         fis.read(codeBytes);
 
-        List<String> codeEl = new ArrayList<String>();
+        List<Instruction> codeEl = new ArrayList<Instruction>();
         byte[] b1 = new byte[1];
         byte[] b2 = new byte[2];
         for (int i = 0; i < codeLength; i++) {
             byte b = codeBytes[i];
             switch (b) {
             case (byte)0x00:
-                codeEl.add("nop");
+                codeEl.add(new Instruction("nop", 0));
                 break;
             case (byte)0x01:
-                codeEl.add("aconst_null");
+                codeEl.add(new Instruction("aconst_null", 0));
                 break;
             case (byte)0x02:
-                codeEl.add("iconst_m1");
+                codeEl.add(new Instruction("iconst_m1", 0));
                 break;
-            case (byte)0x03:
-                codeEl.add("iconst_0");
+                case (byte)0x03:
+                codeEl.add(new Instruction("iconst_0", 0));
                 break;
-            case (byte)0x04:
-                codeEl.add("iconst_1");
+                case (byte)0x04:
+                codeEl.add(new Instruction("iconst_1", 0));
                 break;
-            case (byte)0x05:
-                codeEl.add("iconst_2");
+                case (byte)0x05:
+                codeEl.add(new Instruction("iconst_2", 0));
                 break;
-            case (byte)0x06:
-                codeEl.add("iconst_3");
+                case (byte)0x06:
+                codeEl.add(new Instruction("iconst_3", 0));
                 break;
-            case (byte)0x07:
-                codeEl.add("iconst_4");
+                case (byte)0x07:
+                codeEl.add(new Instruction("iconst_4", 0));
                 break;
-            case (byte)0x08:
-                codeEl.add("iconst_5");
+                case (byte)0x08:
+                codeEl.add(new Instruction("iconst_5", 0));
                 break;
-            case (byte)0x09:
-                codeEl.add("lconst_0");
+                case (byte)0x09:
+                codeEl.add(new Instruction("lconst_0", 0));
                 break;
-            case (byte)0x0A:
-                codeEl.add("lconst_1");
+                case (byte)0x0A:
+                codeEl.add(new Instruction("lconst_1", 0));
                 break;
-            case (byte)0x0D:
-                codeEl.add("fconst_2");
+                case (byte)0x0D:
+                codeEl.add(new Instruction("fconst_2", 0));
                 break;
-            case (byte)0x0F:
-                codeEl.add("dconst_1");
+                case (byte)0x0F:
+                codeEl.add(new Instruction("dconst_1", 0));
                 break;
-            case (byte)0x12:
+                case (byte)0x12:
                 b1[0] = codeBytes[++i];
-                codeEl.add(concatByteToString("ldc ", b1));
+                codeEl.add(new Instruction("ldc", concatByteToInt(b1)));
                 break;
-            case (byte)0x18:
+                case (byte)0x18:
                 b1[0] = codeBytes[++i];
-                codeEl.add(concatByteToString("dload ", b1));
+                codeEl.add(new Instruction("dload", concatByteToInt(b1)));
                 break;
-            case (byte)0x2a:
-                codeEl.add("aload_0");
+                case (byte)0x2a:
+                codeEl.add(new Instruction("aload_0", 0));
                 break;
-            case (byte)0xb1:
-                codeEl.add("return");
+                case (byte)0xb1:
+                codeEl.add(new Instruction("return", 0));
                 break;    
-            case (byte)0xb2:
+                case (byte)0xb2:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                codeEl.add(concatByteToString("getstatic ", b2));
+                codeEl.add(new Instruction("getstatic", concatByteToInt(b2)));
                 break;    
-            case (byte)0xb6:
+                case (byte)0xb6:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                codeEl.add(concatByteToString("invokevirtual ", b2));
+                codeEl.add(new Instruction("invokevirtual", concatByteToInt(b2)));
                 break;    
-            case (byte)0xb7:
+                case (byte)0xb7:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                codeEl.add(concatByteToString("invokespecial ", b2));
+                codeEl.add(new Instruction("invokespecial", concatByteToInt(b2)));
                 break;    
             default:
                 System.out.println("Bytecode type not implemented yet");
@@ -637,13 +635,13 @@ public class ClassReader {
         return codeDict;
     }
 
-    private String concatByteToString(String s, byte[] bytes) {
-        StringBuilder sb = new StringBuilder(s); // Use StringBuilder for efficient string concatenation
-        for (byte b : bytes) {
-            int intValue = Byte.toUnsignedInt(b);
-            sb.append(intValue);
+    private int concatByteToInt(byte[] bytes) {
+        int value = 0;
+        for (int i = 0; i < bytes.length; i++) {
+            value = (value << 8) | (bytes[i] & 0xFF);
         }
-        return sb.toString();
+
+        return value;
     }
 
     public void ReadClass(String path) {
@@ -655,7 +653,7 @@ public class ClassReader {
             readMethods();
             readAttributes();
 
-            System.out.println("\nmethods names:\n");
+            System.out.println("\nmethods:\n");
             for (int i = 0; i < this.methods.size(); i++) {
                Dictionary<String, Object> method = this.methods.get(i);
                int nameIndex = (int)method.get("name_index");

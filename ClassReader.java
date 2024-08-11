@@ -644,6 +644,49 @@ public class ClassReader {
         return value;
     }
 
+    public String ResolveCPIndex(int i) {
+        StringBuilder sb = new StringBuilder();
+        Dictionary<String, String> cpEntry = this.constantPool.get(i - 1);
+        String type = cpEntry.get("tag").toString();
+        switch (type) {
+            case "CONSTANT_Fieldref":
+                int classIndex = Integer.parseInt(cpEntry.get("class_index"));
+                Dictionary<String, String> constClass = this.constantPool.get(classIndex);
+                int nameIndex = Integer.parseInt(constClass.get("name_index"));
+                Dictionary<String, String> constUtf8 = this.constantPool.get(nameIndex);
+                String utf8 = constUtf8.get("bytes");
+                String classString = utf8.substring(utf8.lastIndexOf('/') + 1);
+                sb.append(classString);
+                sb.append(".");
+                int nameTypeIndex = Integer.parseInt(cpEntry.get("name_and_type_index"));
+                Dictionary<String, String> nameType = this.constantPool.get(nameTypeIndex);
+                nameIndex = Integer.parseInt(nameType.get("name_index"));
+                constUtf8 = this.constantPool.get(nameIndex);
+                utf8 = constUtf8.get("bytes");
+                sb.append(utf8);
+                sb.append(".");
+                break;
+            case "CONSTANT_String":
+                int stringIndex = Integer.parseInt(cpEntry.get("string_index"));
+                Dictionary<String, String> constUtf82 = this.constantPool.get(stringIndex);
+                sb.append("\"");
+                sb.append(constUtf82.get("bytes"));
+                sb.append("\"");
+                break;
+            case "CONSTANT_Methodref":
+            int nameTypeIndex2 = Integer.parseInt(cpEntry.get("name_and_type_index"));
+            Dictionary<String, String> nameType2 = this.constantPool.get(nameTypeIndex2);
+            int nameIndex2 = Integer.parseInt(nameType2.get("name_index"));
+            constUtf8 = this.constantPool.get(nameIndex2);
+            sb.append(constUtf8.get("bytes"));
+            break;
+            default:
+                throw new AssertionError();
+        }
+
+        return sb.toString();
+    }
+
     public void ReadClass(String path) {
         try {
             System.out.println("Reading class file...");

@@ -645,46 +645,44 @@ public class ClassReader {
     }
 
     public String ResolveCPIndex(int i) {
-        StringBuilder sb = new StringBuilder();
+        int nameIndex = 0, classIndex = 0, nameAndTypeIndex = 0;
+        String tempString = "";
         Dictionary<String, String> cpEntry = this.constantPool.get(i - 1);
-        String type = cpEntry.get("tag").toString();
+        String type = cpEntry.get("tag");
         switch (type) {
+            case "CONSTANT_Integer":
+            case "CONSTANT_Long":
+            case "CONSTANT_Float":
+            case "CONSTANT_Double":
+            case "CONSTANT_Utf8":
+                tempString = cpEntry.get("bytes");
+                break;
             case "CONSTANT_Fieldref":
-                int classIndex = Integer.parseInt(cpEntry.get("class_index"));
-                Dictionary<String, String> constClass = this.constantPool.get(classIndex);
-                int nameIndex = Integer.parseInt(constClass.get("name_index"));
-                Dictionary<String, String> constUtf8 = this.constantPool.get(nameIndex);
-                String utf8 = constUtf8.get("bytes");
-                String classString = utf8.substring(utf8.lastIndexOf('/') + 1);
-                sb.append(classString);
-                sb.append(".");
-                int nameTypeIndex = Integer.parseInt(cpEntry.get("name_and_type_index"));
-                Dictionary<String, String> nameType = this.constantPool.get(nameTypeIndex);
-                nameIndex = Integer.parseInt(nameType.get("name_index"));
-                constUtf8 = this.constantPool.get(nameIndex);
-                utf8 = constUtf8.get("bytes");
-                sb.append(utf8);
-                sb.append(".");
+                classIndex = Integer.parseInt(cpEntry.get("class_index"));
+                nameAndTypeIndex = Integer.parseInt(cpEntry.get("name_and_type_index"));
+                tempString = ResolveCPIndex(classIndex) + "." + ResolveCPIndex(nameAndTypeIndex);
+                break;
+            case "CONSTANT_NameAndType":
+                nameIndex = Integer.parseInt(cpEntry.get("name_index"));
+                tempString = ResolveCPIndex(nameIndex);
+                break;
+            case "CONSTANT_Class":
+                nameIndex = Integer.parseInt(cpEntry.get("name_index"));
+                tempString = ResolveCPIndex(nameIndex);
                 break;
             case "CONSTANT_String":
                 int stringIndex = Integer.parseInt(cpEntry.get("string_index"));
-                Dictionary<String, String> constUtf82 = this.constantPool.get(stringIndex);
-                sb.append("\"");
-                sb.append(constUtf82.get("bytes"));
-                sb.append("\"");
+                tempString = "\"" + ResolveCPIndex(stringIndex) + "\"";
                 break;
             case "CONSTANT_Methodref":
-            int nameTypeIndex2 = Integer.parseInt(cpEntry.get("name_and_type_index"));
-            Dictionary<String, String> nameType2 = this.constantPool.get(nameTypeIndex2);
-            int nameIndex2 = Integer.parseInt(nameType2.get("name_index"));
-            constUtf8 = this.constantPool.get(nameIndex2);
-            sb.append(constUtf8.get("bytes"));
-            break;
+                nameAndTypeIndex = Integer.parseInt(cpEntry.get("name_and_type_index"));
+                tempString = ResolveCPIndex(nameAndTypeIndex);
+                break;
             default:
                 throw new AssertionError();
         }
 
-        return sb.toString();
+        return tempString;
     }
 
     public void ReadClass(String path) {
@@ -696,27 +694,7 @@ public class ClassReader {
             readMethods();
             readAttributes();
 
-            System.out.println("\nmethods:\n");
-            for (int i = 0; i < this.methods.size(); i++) {
-               Dictionary<String, Object> method = this.methods.get(i);
-               int nameIndex = (int)method.get("name_index");
-               Dictionary<String, String> cpEntry = this.constantPool.get(nameIndex - 1);
-               System.out.println(cpEntry.get("bytes"));
-               List<Dictionary<String, Object>> attrs = (List<Dictionary<String, Object>>) method.get("attributes");
-               for (int j = 0; j < attrs.size(); j++) {
-                    Dictionary<String, Object> attr = attrs.get(j);
-                    int attributeNameIndex = (int) attr.get("attribute_name_index");
-                    cpEntry = this.constantPool.get(attributeNameIndex - 1);
-                    if (Arrays.equals(cpEntry.get("bytes").getBytes(StandardCharsets.UTF_8), "Code".getBytes(StandardCharsets.UTF_8))) {
-                        Dictionary<String, Object> codeInfo = (Dictionary<String, Object>) attr.get("info");
-                        List<String> code = (List<String>) codeInfo.get("code");
-                        for (String s : code) {
-                            System.out.print(String.format("\t%s\n", s));
-                        }
-                        System.out.println();
-                    }
-               }
-            }
+            System.out.println(ResolveCPIndex(7));
         } catch (IOException e) {
             e.printStackTrace();
         }

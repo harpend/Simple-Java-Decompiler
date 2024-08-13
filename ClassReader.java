@@ -694,7 +694,7 @@ public class ClassReader {
             readMethods();
             readAttributes();
 
-            System.out.println(ResolveCPIndex(7));
+            System.out.println(methods);
         } catch (IOException e) {
             e.printStackTrace();
         }

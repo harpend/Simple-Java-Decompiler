@@ -24,4 +24,10 @@ public class ClassParser {
         Stack gotoStack = new Stack(); //keeps track of where goto statements branch to
         Stack fieldStack = new Stack(); //stores field data
         Stack finalStack = new Stack(); //stores final java code
+
+        public void ParseClass() {
+            ClassReader cr = new ClassReader();
+            cr.ReadClass("./tests/test.class");
+            
+        }
 }

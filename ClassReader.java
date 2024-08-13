@@ -16,7 +16,8 @@ public class ClassReader {
     private int minorVer;
     private int majorVer;
     private int constantPoolCount;
-    private int thisClass;
+    public int thisClass;
+    public int methodsCount;
     private int superClass;
     private int interfacesCount;
     private FileInputStream fis;
@@ -328,7 +329,7 @@ public class ClassReader {
 
         fis.read(methodsCountBytes);
 
-        int methodsCount = ByteBuffer.wrap(methodsCountBytes).getShort();
+        this.methodsCount = ByteBuffer.wrap(methodsCountBytes).getShort();
 
         List<Dictionary<String, Object>> list = new ArrayList<Dictionary<String, Object>> (); 
 
@@ -336,7 +337,7 @@ public class ClassReader {
         byte[] nameIndexBytes = new byte[2];
         byte[] descriptorIndexBytes = new byte[2];
         byte[] attributesCountBytes = new byte[2];
-        for (int i = 0; i < methodsCount; i++) {
+        for (int i = 0; i < this.methodsCount; i++) {
             Dictionary<String, Object> element = new Hashtable<>();
             fis.read(accessFlagsBytes);
             fis.read(nameIndexBytes);

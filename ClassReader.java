@@ -677,7 +677,7 @@ public class ClassReader {
                 break;
             case "CONSTANT_Methodref":
                 nameAndTypeIndex = Integer.parseInt(cpEntry.get("name_and_type_index"));
-                tempString = ResolveCPIndex(nameAndTypeIndex);
+                tempString = ResolveCPIndex(nameAndTypeIndex) + "()";
                 break;
             default:
                 throw new AssertionError();

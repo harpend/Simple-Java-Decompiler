@@ -52,11 +52,11 @@ public class ClassParser {
             String name = cr.ResolveCPIndex(nameIndex);
             int descriptorIndex = (int)subDict.get("descriptor_index");
             String paramsAndType = cr.ResolveCPIndex(descriptorIndex);
-            String type = resolveType(paramsAndType);
+            String types = resolveType(paramsAndType);
             List<Parameter> params = resolveParameters(paramsAndType);
             List<Dictionary<String, Object>> instructions = (List<Dictionary<String, Object>>)subDict.get("attributes");
             List<Statement> statements = parseInstructions(cr, instructions);
-            Subroutine s = new Subroutine(flags, type, name, params, statements);
+            Subroutine s = new Subroutine(flags, types, name, params, statements);
             return s;
         }
 
@@ -113,7 +113,6 @@ public class ClassParser {
 
         private List<Parameter> resolveParameters(String s) {
             List<Parameter> parameters = new ArrayList<>();
-
             int openingParenIndex = s.indexOf('(');
             int closingParenIndex = s.indexOf(')');
             
@@ -123,10 +122,13 @@ public class ClassParser {
                 for (int i = 0; i < paramPart.length(); i++) {
                     char typeChar = paramPart.charAt(i);
                     String name = "param" + i;
+                    String javaType = null;
+
                     if (typeChar == 'L') {
                         int semicolonIndex = paramPart.indexOf(';', i);
                         if (semicolonIndex != -1) {
-                            parameters.add(new Parameter(paramPart.substring(i, semicolonIndex + 1), name));
+                            // Convert the class type descriptor to a human-readable format
+                            javaType = paramPart.substring(i + 1, semicolonIndex).replace('/', '.');
                             i = semicolonIndex;
                         } else {
                             throw new IllegalArgumentException("Invalid method descriptor");
@@ -134,30 +136,49 @@ public class ClassParser {
                     } else if (typeChar == '[') {
                         StringBuilder arrayType = new StringBuilder();
                         while (paramPart.charAt(i) == '[') {
-                            arrayType.append('[');
+                            arrayType.append("[]");
                             i++;
                         }
                         char arrayBaseType = paramPart.charAt(i);
                         if (arrayBaseType == 'L') {
                             int semicolonIndex = paramPart.indexOf(';', i);
                             if (semicolonIndex != -1) {
-                                arrayType.append(paramPart.substring(i, semicolonIndex + 1));
+                                javaType = paramPart.substring(i + 1, semicolonIndex).replace('/', '.');
+                                arrayType.insert(0, javaType);
                                 i = semicolonIndex;
                             } else {
                                 throw new IllegalArgumentException("Invalid method descriptor");
                             }
                         } else {
-                            arrayType.append(arrayBaseType);
+                            javaType = getJavaTypeFromChar(arrayBaseType);
+                            arrayType.insert(0, javaType);
                         }
-                        parameters.add(new Parameter(arrayType.toString(), name));
+                        javaType = arrayType.toString();
                     } else {
-                        parameters.add(new Parameter(Character.toString(typeChar), name));
+                        javaType = getJavaTypeFromChar(typeChar);
                     }
+                    
+                    parameters.add(new Parameter(javaType, name));
                 }
             } else {
                 throw new IllegalArgumentException("Invalid method descriptor");
             }
-
+        
             return parameters;
+        }
+
+        private String getJavaTypeFromChar(char typeChar) {
+            switch (typeChar) {
+                case 'B': return "byte";
+                case 'C': return "char";
+                case 'D': return "double";
+                case 'F': return "float";
+                case 'I': return "int";
+                case 'J': return "long";
+                case 'S': return "short";
+                case 'Z': return "boolean";
+                case 'V': return "void";
+                default: throw new IllegalArgumentException("Unknown type: " + typeChar);
+            }
         }
 }

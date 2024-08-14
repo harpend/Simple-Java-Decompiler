@@ -17,12 +17,12 @@ class ClassDeclaration extends astNode {
 
     public String toString(String indent) {
         StringBuilder s = new StringBuilder();
-        s.append(indent).append(this.accessFlags).append(" ").append(this.name).append(" {\n");
+        s.append(indent).append(this.accessFlags).append(" ").append("class ").append(this.name).append(" {\n");
         String subIndent = indent + "\t";
         for (Subroutine sub : this.subroutines) {
             s.append(sub.toString(subIndent)).append("\n");
         }
-        s.append(indent).append("}");
+        s.append(indent).append("}\n");
         return s.toString();
     }
 

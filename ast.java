@@ -2,7 +2,7 @@
 import java.util.List;
 
 abstract class astNode {
-    
+    public abstract String toString(String indent);
 }
 
 class ClassDeclaration extends astNode {
@@ -13,6 +13,21 @@ class ClassDeclaration extends astNode {
         this.accessFlags = flags;
         this.name = name;
         this.subroutines = subroutines;
+    }
+
+    public String toString(String indent) {
+        StringBuilder s = new StringBuilder();
+        s.append(indent).append(this.accessFlags).append(" ").append(this.name).append(" {\n");
+        String subIndent = indent + "\t";
+        for (Subroutine sub : this.subroutines) {
+            s.append(sub.toString(subIndent)).append("\n");
+        }
+        s.append(indent).append("}");
+        return s.toString();
+    }
+
+    public String toString() {
+        return toString("");
     }
 }
 
@@ -28,6 +43,31 @@ class Subroutine extends astNode {
         this.params = params;
         this.instructions = instructions;
     }
+
+    @Override
+    public String toString(String indent) {
+        StringBuilder s = new StringBuilder();
+        s.append(indent).append(this.accessFlags).append(" ").append(this.type).append(" ").append(this.name).append("(");
+        for (int i = 0; i < this.params.size(); i++) {
+            s.append(this.params.get(i).toString());
+            if (i < this.params.size() - 1) {
+                s.append(", ");
+            }
+        }
+        s.append(") {\n");
+        
+        String statIndent = indent + "\t";
+        for (Statement stat : this.instructions) {
+            s.append(stat.toString(statIndent)).append("\n");
+        }
+        s.append(indent).append("}");
+        return s.toString();
+    }
+
+    @Override
+    public String toString() {
+        return toString("");
+    }
 }
 
 class Parameter extends astNode {
@@ -37,6 +77,15 @@ class Parameter extends astNode {
         this.type = type;
         this.name = name;
     }
+
+    public String toString(String indent) {
+        return indent + this.type + " " + this.name;
+    }
+
+    @Override
+    public String toString() {
+        return toString("");
+    }
 }
 
 class Statement extends astNode {
@@ -44,5 +93,14 @@ class Statement extends astNode {
 
     public Statement(String statement) {
         this.statement = statement;
+    }
+
+    public String toString(String indent) {
+        return indent + this.statement;
+    }
+
+    @Override
+    public String toString() {
+        return toString("");
     }
 }

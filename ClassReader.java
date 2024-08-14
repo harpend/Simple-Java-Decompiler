@@ -694,8 +694,7 @@ public class ClassReader {
             readFields();
             readMethods();
             readAttributes();
-
-            System.out.println(methods);
+            System.out.println("\n");
         } catch (IOException e) {
             e.printStackTrace();
         }

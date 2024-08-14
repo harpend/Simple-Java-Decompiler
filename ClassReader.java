@@ -46,20 +46,11 @@ public class ClassReader {
     
     public void readConstantPool(String path) throws IOException{
             fis = new FileInputStream(path);
-            byte[] magicNumBytes = new byte[4];
-            byte[] minorVerBytes = new byte[2];
-            byte[] majorVerBytes = new byte[2];
-            byte[] constantPoolCountBytes = new byte[2];
-            
-            fis.read(magicNumBytes);
-            fis.read(minorVerBytes);
-            fis.read(majorVerBytes);
-            fis.read(constantPoolCountBytes);
 
-            this.magicNum = ByteBuffer.wrap(magicNumBytes).getInt();
-            this.minorVer = ByteBuffer.wrap(minorVerBytes).getShort();
-            this.majorVer = ByteBuffer.wrap(majorVerBytes).getShort();
-            this.constantPoolCount = ByteBuffer.wrap(constantPoolCountBytes).getShort();
+            this.magicNum = getInt();
+            this.minorVer = getShort();
+            this.majorVer = getShort();
+            this.constantPoolCount = getShort();
 
             byte[] tag = new byte[1];
             List<Dictionary<String, String>> list = new ArrayList<Dictionary<String, String>> (); 
@@ -69,21 +60,15 @@ public class ClassReader {
                 switch (tag[0]) {
                     case CONSTANT_Class:
                         // u1 tag, u2 name_index
-                        byte[] nameIndexBytes = new byte[2];
-                        fis.read(nameIndexBytes);
-                        String nameIndex = Short.toString(ByteBuffer.wrap(nameIndexBytes).getShort());
+                        String nameIndex = Integer.toString(getShort());
                         element.put("tag", "CONSTANT_Class");
                         element.put("name_index", nameIndex);
                         list.add(element);               
                         break;
                     case CONSTANT_Fieldref:
                         // u1 tag, u2 class_index, u2 name_amd_type_index
-                        byte[] classIndexBytes = new byte[2];
-                        byte[] nameAndTypeIndexBytes = new byte[2];
-                        fis.read(classIndexBytes);
-                        fis.read(nameAndTypeIndexBytes);
-                        String classIndex = Short.toString(ByteBuffer.wrap(classIndexBytes).getShort());
-                        String nameAndTypeIndex = Short.toString(ByteBuffer.wrap(nameAndTypeIndexBytes).getShort());
+                        String classIndex = Integer.toString(getShort());
+                        String nameAndTypeIndex = Integer.toString(getShort());
                         element.put("tag", "CONSTANT_Fieldref");
                         element.put("class_index", classIndex);
                         element.put("name_and_type_index", nameAndTypeIndex);
@@ -91,12 +76,8 @@ public class ClassReader {
                         break;
                     case CONSTANT_Double:
                         // u1 tag, u4 high_bytes, u4 low_bytes
-                        byte[] highBytesBytes = new byte[4];
-                        byte[] lowBytesBytes = new byte[4];
-                        fis.read(highBytesBytes);
-                        fis.read(lowBytesBytes);
-                        String highBytes = Integer.toString(ByteBuffer.wrap(highBytesBytes).getInt());
-                        String lowBytes = Integer.toString(ByteBuffer.wrap(lowBytesBytes).getInt());
+                        String highBytes = Integer.toString(getInt());
+                        String lowBytes = Integer.toString(getInt());
                         element.put("tag", "CONSTANT_Double");
                         element.put("high_bytes", highBytes);
                         element.put("low_bytes", lowBytes);
@@ -104,30 +85,22 @@ public class ClassReader {
                         break;
                     case CONSTANT_Float:
                         // u1 tag, u4 bytes
-                        byte[] bytesBytes2 = new byte[4];
-                        fis.read(bytesBytes2);
-                        String bytes2 = Integer.toString(ByteBuffer.wrap(bytesBytes2).getInt());
+                        String bytes2 = Integer.toString(getInt());
                         element.put("tag", "CONSTANT_Float");
                         element.put("bytes", bytes2);
                         list.add(element);                    
                         break;
                     case CONSTANT_Integer:
                         // u1 tag, u4 bytes
-                        byte[] bytesBytes = new byte[4];
-                        fis.read(bytesBytes);
-                        String bytes = Integer.toString(ByteBuffer.wrap(bytesBytes).getInt());
+                        String bytes = Integer.toString(getInt());
                         element.put("tag", "CONSTANT_Integer");
                         element.put("bytes", bytes);
                         list.add(element);
                         break;
                     case CONSTANT_InterfaceMethodref:
                         // u1 tag, u2 class_index, u2 name_amd_type_index
-                        byte[] classIndexBytes3 = new byte[2];
-                        byte[] nameAndTypeIndexBytes3 = new byte[2];
-                        fis.read(classIndexBytes3);
-                        fis.read(nameAndTypeIndexBytes3);
-                        String classIndex3 = Short.toString(ByteBuffer.wrap(classIndexBytes3).getShort());
-                        String nameAndTypeIndex3 = Short.toString(ByteBuffer.wrap(nameAndTypeIndexBytes3).getShort());
+                        String classIndex3 = Integer.toString(getShort());
+                        String nameAndTypeIndex3 = Integer.toString(getShort());
                         element.put("tag", "CONSTANT_InterfaceMethodref");
                         element.put("class_index", classIndex3);
                         element.put("name_and_type_index", nameAndTypeIndex3);
@@ -135,12 +108,8 @@ public class ClassReader {
                         break;
                     case CONSTANT_InvokeDynamic:
                         // u1 tag, u2 bootstrap_method_attr_index, u2 name_and_type_index
-                        byte[] bootstrapMethodAtrrIndexBytes = new byte[2];
-                        byte[] nameAndTypeIndexBytes4 = new byte[2];
-                        fis.read(bootstrapMethodAtrrIndexBytes);
-                        fis.read(nameAndTypeIndexBytes4);
-                        String bootstrapMethodAttrIndex = Short.toString(ByteBuffer.wrap(bootstrapMethodAtrrIndexBytes).getShort());
-                        String nameAndTypeIndex4 = Short.toString(ByteBuffer.wrap(nameAndTypeIndexBytes4).getShort());
+                        String bootstrapMethodAttrIndex = Integer.toString(getShort());
+                        String nameAndTypeIndex4 = Integer.toString(getShort());
                         element.put("tag", "CONSTANT_InvokeDyanmic");
                         element.put("bootstrap_method_attr_index", bootstrapMethodAttrIndex);
                         element.put("name_and_type_index", nameAndTypeIndex4);
@@ -148,12 +117,8 @@ public class ClassReader {
                         break;
                     case CONSTANT_Long:
                         // u1 tag, u4 high_bytes, u4 low_bytes
-                        byte[] highBytesBytes2 = new byte[4];
-                        byte[] lowBytesBytes2 = new byte[4];
-                        fis.read(highBytesBytes2);
-                        fis.read(lowBytesBytes2);
-                        String highBytes2 = Integer.toString(ByteBuffer.wrap(highBytesBytes2).getInt());
-                        String lowBytes2 = Integer.toString(ByteBuffer.wrap(lowBytesBytes2).getInt());
+                        String highBytes2 = Integer.toString(getInt());
+                        String lowBytes2 = Integer.toString(getInt());
                         element.put("tag", "CONSTANT_Long");
                         element.put("high_bytes", highBytes2);
                         element.put("low_bytes", lowBytes2);
@@ -162,11 +127,9 @@ public class ClassReader {
                     case CONSTANT_MethodHandle:
                         // u1 tag, u1 reference_kind, u2 reference_index
                         byte[] referenceKindBytes = new byte[1];
-                        byte[] referenceIndexBytes = new byte[2];
                         fis.read(referenceKindBytes);
-                        fis.read(referenceIndexBytes);
                         String referenceKind = Byte.toString(ByteBuffer.wrap(referenceKindBytes).get());
-                        String referenceIndex = Short.toString(ByteBuffer.wrap(referenceIndexBytes).getShort());
+                        String referenceIndex = Integer.toString(getShort());
                         element.put("tag", "CONSTANT_MethodHandle");
                         element.put("referenceKind", referenceKind);
                         element.put("reference_index", referenceIndex);
@@ -174,21 +137,15 @@ public class ClassReader {
                         break;
                     case CONSTANT_MethodType:
                         // u1 tag, u2 descriptor_index
-                        byte[] descriptorIndexBytes2 = new byte[2];
-                        fis.read(descriptorIndexBytes2);
-                        String descriptorIndex2 = Short.toString(ByteBuffer.wrap(descriptorIndexBytes2).getShort());
+                        String descriptorIndex2 = Integer.toString(getShort());
                         element.put("tag", "CONSTANT_MethodType");
                         element.put("descriptor_index", descriptorIndex2);
                         list.add(element);
                         break;
                     case CONSTANT_Methodref:
                         // u1 tag, u2 class_index, u2 name_amd_type_index
-                        byte[] classIndexBytes2 = new byte[2];
-                        byte[] nameAndTypeIndexBytes2 = new byte[2];
-                        fis.read(classIndexBytes2);
-                        fis.read(nameAndTypeIndexBytes2);
-                        String classIndex2 = Short.toString(ByteBuffer.wrap(classIndexBytes2).getShort());
-                        String nameAndTypeIndex2 = Short.toString(ByteBuffer.wrap(nameAndTypeIndexBytes2).getShort());
+                        String classIndex2 = Integer.toString(getShort());
+                        String nameAndTypeIndex2 = Integer.toString(getShort());
                         element.put("tag", "CONSTANT_Methodref");
                         element.put("class_index", classIndex2);
                         element.put("name_and_type_index", nameAndTypeIndex2);
@@ -196,12 +153,8 @@ public class ClassReader {
                         break;
                     case CONSTANT_NameAndType:
                         // u1 tag, u2 name_index, u2 descriptor_index
-                        byte[] nameIndexBytes2 = new byte[2];
-                        byte[] descriptorIndexBytes = new byte[2];
-                        fis.read(nameIndexBytes2);
-                        fis.read(descriptorIndexBytes);
-                        String nameIndex2 = Short.toString(ByteBuffer.wrap(nameIndexBytes2).getShort());
-                        String descriptorIndex = Short.toString(ByteBuffer.wrap(descriptorIndexBytes).getShort());
+                        String nameIndex2 = Integer.toString(getShort());
+                        String descriptorIndex = Integer.toString(getShort());
                         element.put("tag", "CONSTANT_NameAndType");
                         element.put("name_index", nameIndex2);
                         element.put("descriptor_index", descriptorIndex);
@@ -209,18 +162,14 @@ public class ClassReader {
                         break;
                     case CONSTANT_String:
                         // u1 tag, u2 string_index
-                        byte[] stringIndexBytes = new byte[2];
-                        fis.read(stringIndexBytes);
-                        String stringIndex = Short.toString(ByteBuffer.wrap(stringIndexBytes).getShort());
+                        String stringIndex = Integer.toString(getShort());
                         element.put("tag", "CONSTANT_String");
                         element.put("string_index", stringIndex);
                         list.add(element);
                         break;
                     case CONSTANT_Utf8:
                         // u1 tag, u2 length, u1 bytes[length]
-                        byte[] lengthBytes = new byte[2];
-                        fis.read(lengthBytes);
-                        Short lengthShort = ByteBuffer.wrap(lengthBytes).getShort();
+                        int lengthShort = getShort();
                         byte[] bytesBytes3 = new byte[lengthShort];
                         fis.read(bytesBytes3);
                         String bytes3 = new String(bytesBytes3, StandardCharsets.UTF_8);
@@ -246,21 +195,10 @@ public class ClassReader {
     }
 
     private void readInterfaces() throws IOException {
-        // thisClass and superClass refer to the entries in the constant pool
-        byte[] accessFlagsBytes = new byte[2];
-        byte[] thisClassBytes = new byte[2];
-        byte[] superClassBytes = new byte[2];
-        byte[] interfacesCountBytes = new byte[2];
-
-        fis.read(accessFlagsBytes);
-        fis.read(thisClassBytes);
-        fis.read(superClassBytes);
-        fis.read(interfacesCountBytes);
-
-        int flags = ByteBuffer.wrap(accessFlagsBytes).getShort();   
-        this.thisClass = ByteBuffer.wrap(thisClassBytes).getShort();   
-        this.superClass = ByteBuffer.wrap(superClassBytes).getShort();   
-        this.interfacesCount = ByteBuffer.wrap(interfacesCountBytes).getShort();  
+        int flags = getShort();   
+        this.thisClass = getShort();   
+        this.superClass = getShort();   
+        this.interfacesCount = getShort();  
 
         this.accessFlags = new ArrayList<String> ();
         
@@ -268,9 +206,7 @@ public class ClassReader {
 
         this.interfaces = new ArrayList<Integer>(this.interfacesCount);
         for (int i = 0; i < this.interfacesCount; i++) {
-            byte[] interBytes = new byte[2];
-            fis.read(interBytes);
-            int interfac = ByteBuffer.wrap(interBytes).getShort();
+            int interfac = getShort();
             this.interfaces.add(interfac);
         }
 
@@ -281,28 +217,16 @@ public class ClassReader {
     }
 
     private void readFields() throws IOException {
-        byte[] fieldsCountBytes = new byte[2];
-
-        fis.read(fieldsCountBytes);
-
-        int fieldsCount = ByteBuffer.wrap(fieldsCountBytes).getShort();
+        int fieldsCount = getShort();
         List<Dictionary<String, Object>> list = new ArrayList<Dictionary<String, Object>> (); 
 
-        byte[] accessFlagsBytes = new byte[2];
-        byte[] nameIndexBytes = new byte[2];
-        byte[] descriptorIndexBytes = new byte[2];
-        byte[] attributesCountBytes = new byte[2];
         for (int i = 0; i < fieldsCount; i++) {
             Dictionary<String, Object> element = new Hashtable<>();
-            fis.read(accessFlagsBytes);
-            fis.read(nameIndexBytes);
-            fis.read(descriptorIndexBytes);
-            fis.read(attributesCountBytes);
-
-            int flags = ByteBuffer.wrap(accessFlagsBytes).getShort();
-            int nameIndex = ByteBuffer.wrap(nameIndexBytes).getShort();
-            int descriptorIndex = ByteBuffer.wrap(descriptorIndexBytes).getShort();
-            int attributesCount = ByteBuffer.wrap(attributesCountBytes).getShort();
+ 
+            int flags = getShort();
+            int nameIndex = getShort();
+            int descriptorIndex = getShort();
+            int attributesCount = getShort();
             
             List<String> accessFlags = calcAccessFlags(flags);
 
@@ -325,29 +249,16 @@ public class ClassReader {
     }
 
     private void readMethods() throws IOException {
-        byte[] methodsCountBytes = new byte[2];
-
-        fis.read(methodsCountBytes);
-
-        this.methodsCount = ByteBuffer.wrap(methodsCountBytes).getShort();
+        this.methodsCount = getShort();
 
         List<Dictionary<String, Object>> list = new ArrayList<Dictionary<String, Object>> (); 
-
-        byte[] accessFlagsBytes = new byte[2];
-        byte[] nameIndexBytes = new byte[2];
-        byte[] descriptorIndexBytes = new byte[2];
-        byte[] attributesCountBytes = new byte[2];
         for (int i = 0; i < this.methodsCount; i++) {
             Dictionary<String, Object> element = new Hashtable<>();
-            fis.read(accessFlagsBytes);
-            fis.read(nameIndexBytes);
-            fis.read(descriptorIndexBytes);
-            fis.read(attributesCountBytes);
 
-            int flags = ByteBuffer.wrap(accessFlagsBytes).getShort();
-            int nameIndex = ByteBuffer.wrap(nameIndexBytes).getShort();
-            int descriptorIndex = ByteBuffer.wrap(descriptorIndexBytes).getShort();
-            int attributesCount = ByteBuffer.wrap(attributesCountBytes).getShort();
+            int flags = getShort();
+            int nameIndex = getShort();
+            int descriptorIndex = getShort();
+            int attributesCount = getShort();
             
             List<String> accessFlags = calcAccessFlags(flags);
 
@@ -369,12 +280,7 @@ public class ClassReader {
     }
 
     private void readAttributes() throws IOException {
-        byte[] attributesCountBytes = new byte[2];
-
-        fis.read(attributesCountBytes);
-
-        int attributesCount = ByteBuffer.wrap(attributesCountBytes).getShort();
-
+        int attributesCount = getShort();
         this.attributes = parseAttr(attributesCount);
         System.out.println("attributes parsed...");
     }
@@ -432,15 +338,11 @@ public class ClassReader {
 
     private List<Dictionary<String, Object>> parseAttr(int attrCount) throws IOException {
         List<Dictionary<String, Object>> attrList = new ArrayList<Dictionary<String, Object>> (); 
-        byte[] attributeNameIndexBytes = new byte[2];
-        byte[] attributeLengthBytes = new byte[4];
         for (int j = 0; j < attrCount; j++) {
             Dictionary<String, Object> el = new Hashtable<>();
-            fis.read(attributeNameIndexBytes);
-            fis.read(attributeLengthBytes);
 
-            int attributeNameIndex = ByteBuffer.wrap(attributeNameIndexBytes).getShort();
-            int attributeLength = ByteBuffer.wrap(attributeLengthBytes).getInt();
+            int attributeNameIndex = getShort();
+            int attributeLength = getInt();
           
             Dictionary<String, Object> codeInfo = null;
             Dictionary<String, Object> lineNumberTableInfo = null;
@@ -454,9 +356,7 @@ public class ClassReader {
                 el.put("info", lineNumberTableInfo);
             }
             else if (Arrays.equals(resolveNameIndex(attributeNameIndex), "SourceFile".getBytes(StandardCharsets.UTF_8))) {
-                byte[] sf = new byte[2];
-                fis.read(sf);
-                int sfIndex = ByteBuffer.wrap(sf).getShort();
+                int sfIndex = getShort();
                 el.put("sourcefile_index", sfIndex);
             }
             else {
@@ -480,22 +380,15 @@ public class ClassReader {
     private Dictionary<String, Object> parseLineNumberTable() throws IOException {
             Dictionary<String, Object> lineNumberTableAttr = new Hashtable<>();
 
-            byte[] lineNumberTableLengthBytes = new byte[2];
-            fis.read(lineNumberTableLengthBytes);
-            int lineNumberTableLength = ByteBuffer.wrap(lineNumberTableLengthBytes).getShort();
+            int lineNumberTableLength = getShort();
 
             List<Dictionary<String, Integer>> lineNumberTable = new ArrayList<>();
 
             for (int i = 0; i < lineNumberTableLength; i++) {
                 Dictionary<String, Integer> lineNumberEntry = new Hashtable<>();
 
-                byte[] startPcBytes = new byte[2];
-                fis.read(startPcBytes);
-                int startPc = ByteBuffer.wrap(startPcBytes).getShort();
-
-                byte[] lineNumberBytes = new byte[2];
-                fis.read(lineNumberBytes);
-                int lineNumber = ByteBuffer.wrap(lineNumberBytes).getShort();
+                int startPc = getShort();
+                int lineNumber = getShort();
 
                 lineNumberEntry.put("start_pc", startPc);
                 lineNumberEntry.put("line_number", lineNumber);
@@ -511,17 +404,10 @@ public class ClassReader {
 
     private Dictionary<String, Object> parseCode() throws IOException {
         Dictionary<String, Object> codeDict = new Hashtable<>();
-        byte[] maxStackBytes = new byte[2];
-        byte[] maxLocalsBytes = new byte[2];
-        byte[] codeLengthBytes = new byte[4];
 
-        fis.read(maxStackBytes);
-        fis.read(maxLocalsBytes);
-        fis.read(codeLengthBytes);
-
-        int maxStack = ByteBuffer.wrap(maxStackBytes).getShort();
-        int maxLocals = ByteBuffer.wrap(maxLocalsBytes).getShort();
-        int codeLength = ByteBuffer.wrap(codeLengthBytes).getInt();
+        int maxStack = getShort();
+        int maxLocals = getShort();
+        int codeLength = getInt();
 
         byte[] codeBytes = new byte[codeLength];
 
@@ -608,22 +494,14 @@ public class ClassReader {
             }
         }
 
-        byte[] exceptionTableLengthBytes = new byte[2];
-        
-        fis.read(exceptionTableLengthBytes);
-        
-        int exceptionTableLength = ByteBuffer.wrap(exceptionTableLengthBytes).getShort();
+        int exceptionTableLength = getShort();
         
         if (exceptionTableLength != 0) {
             System.out.println("exceptions not implemented in code");
             System.exit(1);
         }
 
-        byte[] attributesCountBytes = new byte[2];
-
-        fis.read(attributesCountBytes);
-
-        int attributesCount = ByteBuffer.wrap(attributesCountBytes).getShort();
+        int attributesCount = getShort();
         List<Dictionary<String, Object>> attr = null;
         if (attributesCount != 0) {
             attr = parseAttr(attributesCount);
@@ -684,6 +562,18 @@ public class ClassReader {
         }
 
         return tempString;
+    }
+
+    private int getShort() throws IOException {
+        byte[] b = new byte[2];
+        fis.read(b);
+        return ByteBuffer.wrap(b).getShort();
+    }
+
+    private int getInt() throws IOException {
+        byte[] b = new byte[4];
+        fis.read(b);
+        return ByteBuffer.wrap(b).getInt();
     }
 
     public void ReadClass(String path) {

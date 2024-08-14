@@ -53,7 +53,31 @@ public class ClassParser {
             int descriptorIndex = (int)subDict.get("descriptor_index");
             String paramsAndType = cr.ResolveCPIndex(descriptorIndex);
             String type = resolveType(paramsAndType);
-            Subroutine s = new Subroutine(flags, type, name);
+            List<Parameter> params = resolveParameters(paramsAndType);
+            List<Dictionary<String, Object>> instructions = (List<Dictionary<String, Object>>)subDict.get("attributes");
+            List<Statement> statements = parseInstructions(cr, instructions);
+            Subroutine s = new Subroutine(flags, type, name, params, statements);
+            return s;
+        }
+
+        private List<Statement> parseInstructions(ClassReader cr, List<Dictionary<String, Object>> instructions) {
+            List<Statement> statements = new ArrayList<Statement>();
+            for (Dictionary<String, Object> instruction : instructions) {
+                String attributeName = cr.ResolveCPIndex((int) instruction.get("attribute_name_index"));
+                if (attributeName.equals("Code")) {
+                    Dictionary<String, Object> codeInfo = (Dictionary<String, Object>) instruction.get("info");
+                    List<Instruction> bytecode = (List<Instruction>) codeInfo.get("code");
+                    for (Instruction b : bytecode) {
+                        String s = b.type;
+                        if (b.index != 0) {
+                           s = s + " " + cr.ResolveCPIndex(b.index);
+                        }
+                        statements.add(new Statement(s)); 
+                    }
+                }
+            }
+
+            return statements;
         }
 
         private String resolveType(String s) {
@@ -62,7 +86,78 @@ public class ClassParser {
             if (ret.equals("V")) {
                 return "void";
             }
-            return ret;
+            if (ret.equals("I")) {
+                return "int";
+            }
+            if (ret.equals("B")) {
+                return "byte";
+            }
+            if (ret.equals("C")) {
+                return "char";
+            }
+            if (ret.equals("D")) {
+                return "double";
+            }
+            if (ret.equals("J")) {
+                return "long";
+            }
+            if (ret.equals("S")) {
+                return "short";
+            }
+            if (ret.equals("Z")) {
+                return "boolean";
+            }
 
+            return ret;
+        }
+
+        private List<Parameter> resolveParameters(String s) {
+            List<Parameter> parameters = new ArrayList<>();
+
+            int openingParenIndex = s.indexOf('(');
+            int closingParenIndex = s.indexOf(')');
+            
+            if (openingParenIndex != -1 && closingParenIndex != -1 && openingParenIndex < closingParenIndex) {
+                String paramPart = s.substring(openingParenIndex + 1, closingParenIndex);
+
+                for (int i = 0; i < paramPart.length(); i++) {
+                    char typeChar = paramPart.charAt(i);
+                    String name = "param" + i;
+                    if (typeChar == 'L') {
+                        int semicolonIndex = paramPart.indexOf(';', i);
+                        if (semicolonIndex != -1) {
+                            parameters.add(new Parameter(paramPart.substring(i, semicolonIndex + 1), name));
+                            i = semicolonIndex;
+                        } else {
+                            throw new IllegalArgumentException("Invalid method descriptor");
+                        }
+                    } else if (typeChar == '[') {
+                        StringBuilder arrayType = new StringBuilder();
+                        while (paramPart.charAt(i) == '[') {
+                            arrayType.append('[');
+                            i++;
+                        }
+                        char arrayBaseType = paramPart.charAt(i);
+                        if (arrayBaseType == 'L') {
+                            int semicolonIndex = paramPart.indexOf(';', i);
+                            if (semicolonIndex != -1) {
+                                arrayType.append(paramPart.substring(i, semicolonIndex + 1));
+                                i = semicolonIndex;
+                            } else {
+                                throw new IllegalArgumentException("Invalid method descriptor");
+                            }
+                        } else {
+                            arrayType.append(arrayBaseType);
+                        }
+                        parameters.add(new Parameter(arrayType.toString(), name));
+                    } else {
+                        parameters.add(new Parameter(Character.toString(typeChar), name));
+                    }
+                }
+            } else {
+                throw new IllegalArgumentException("Invalid method descriptor");
+            }
+
+            return parameters;
         }
 }

@@ -19,9 +19,9 @@ class ClassDeclaration extends astNode {
 class Subroutine extends astNode {
     String accessFlags, type, name;
     List<Parameter> params;
-    List<Instruction> instructions;
+    List<Statement> instructions;
 
-    public Subroutine(String flags, String type, String name, List<Parameter> params, List<Instruction> instructions) {
+    public Subroutine(String flags, String type, String name, List<Parameter> params, List<Statement> instructions) {
         this.accessFlags = flags;
         this.type = type;
         this.name = name;

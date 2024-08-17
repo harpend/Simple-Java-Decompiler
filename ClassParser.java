@@ -109,9 +109,11 @@ public class ClassParser {
         private void parseInvoke(Instruction i, Subroutine sub) {
             if (i.type.equals("invokevirtual")) {
                 String c = oStack.pop().toString();
-                String l = oStack.pop().toString();
+                String l = oStack.pop().toString().replace("java/lang/", "");
                 String s = this.cr.ResolveCPIndex(i.index);
                 sub.finalStack.push(l + "." + s + "(" + c + ")" + ";");
+            } else if (i.type.equals("invokespecial")) {
+                oStack.pop();
             }
         }
 
@@ -163,7 +165,7 @@ public class ClassParser {
                         int semicolonIndex = paramPart.indexOf(';', i);
                         if (semicolonIndex != -1) {
                             // Convert the class type descriptor to a human-readable format
-                            javaType = paramPart.substring(i + 1, semicolonIndex).replace('/', '.');
+                            javaType = paramPart.substring(i + 1, semicolonIndex).replace("java/lang/", "");
                             i = semicolonIndex;
                         } else {
                             throw new IllegalArgumentException("Invalid method descriptor");
@@ -178,7 +180,7 @@ public class ClassParser {
                         if (arrayBaseType == 'L') {
                             int semicolonIndex = paramPart.indexOf(';', i);
                             if (semicolonIndex != -1) {
-                                javaType = paramPart.substring(i + 1, semicolonIndex).replace('/', '.');
+                                javaType = paramPart.substring(i + 1, semicolonIndex).replace("java/lang/", "");
                                 arrayType.insert(0, javaType);
                                 i = semicolonIndex;
                             } else {

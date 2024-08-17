@@ -1,8 +1,10 @@
+import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Stack;
+import javax.security.auth.login.CredentialException;
 
 public class ClassParser {
         boolean forOrWhile, newArray=false, skipFinish = false;
@@ -13,7 +15,7 @@ public class ClassParser {
         String finalMethods="";
         String type="", ClassName, MethodName, MethodParam, MethodProperties="";
         String space="", outstandingType="";
-        
+        ClassReader cr;
         ArrayList ConstantType=new ArrayList();
         ArrayList ConstantVal=new ArrayList();
         ArrayList FieldType=new ArrayList();
@@ -28,39 +30,39 @@ public class ClassParser {
         Stack finalStack = new Stack(); //stores final java code
 
         public ClassDeclaration ParseClass() {
-            ClassReader cr = new ClassReader();
+            this.cr = new ClassReader();
             cr.ReadClass("./tests/test.class");
-            String flags = String.join(" ", cr.accessFlags);
-            String name = cr.ResolveCPIndex(cr.thisClass);
-            List<Subroutine> s = parseSubroutines(cr);
+            String flags = String.join(" ", this.cr.accessFlags);
+            String name = this.cr.ResolveCPIndex(this.cr.thisClass);
+            List<Subroutine> s = parseSubroutines();
             return new ClassDeclaration(flags, name, s);
         }
 
-        private List<Subroutine> parseSubroutines(ClassReader cr) {
+        private List<Subroutine> parseSubroutines() {
             List<Subroutine> s = new ArrayList<Subroutine>();
-            for (int i = 0; i < cr.methodsCount; i++) {
+            for (int i = 0; i < this.cr.methodsCount; i++) {
                 s.add(parseSubroutine(cr, i));
             }
             return s;
         }
 
         private Subroutine parseSubroutine(ClassReader cr, int i) {
-            Dictionary<String, Object> subDict = cr.methods.get(i);
+            Dictionary<String, Object> subDict = this.cr.methods.get(i);
             List<String> accessFlagsList = (List<String>)subDict.get("access_flags");
             String flags = String.join(" ", accessFlagsList);
             int nameIndex = (int)subDict.get("name_index");
-            String name = cr.ResolveCPIndex(nameIndex);
+            String name = this.cr.ResolveCPIndex(nameIndex);
             int descriptorIndex = (int)subDict.get("descriptor_index");
-            String paramsAndType = cr.ResolveCPIndex(descriptorIndex);
+            String paramsAndType = this.cr.ResolveCPIndex(descriptorIndex);
             String types = resolveType(paramsAndType);
             List<Parameter> params = resolveParameters(paramsAndType);
             List<Dictionary<String, Object>> instructions = (List<Dictionary<String, Object>>)subDict.get("attributes");
-            List<Statement> statements = parseInstructions(cr, instructions);
-            Subroutine s = new Subroutine(flags, types, name, params, statements);
+            Subroutine s = new Subroutine(flags, types, name, params);
+            parseInstructions(cr, instructions, s);
             return s;
         }
 
-        private List<Statement> parseInstructions(ClassReader cr, List<Dictionary<String, Object>> instructions) {
+        private List<Statement> parseInstructions(ClassReader cr, List<Dictionary<String, Object>> instructions, Subroutine sub) {
             List<Statement> statements = new ArrayList<Statement>();
             for (Dictionary<String, Object> instruction : instructions) {
                 String attributeName = cr.ResolveCPIndex((int) instruction.get("attribute_name_index"));
@@ -68,16 +70,49 @@ public class ClassParser {
                     Dictionary<String, Object> codeInfo = (Dictionary<String, Object>) instruction.get("info");
                     List<Instruction> bytecode = (List<Instruction>) codeInfo.get("code");
                     for (Instruction b : bytecode) {
-                        String s = b.type;
-                        if (b.index != 0) {
-                           s = s + " " + cr.ResolveCPIndex(b.index);
-                        }
-                        statements.add(new Statement(s)); 
+                        parseInstruction(b, sub);
                     }
                 }
             }
 
             return statements;
+        }
+
+        private void parseInstruction(Instruction i, Subroutine sub) {
+            switch (i.type) {
+                case "aload_0":
+                    if (!varsInUse.get(i.index)) {
+                        varsInUse.set(i.index);
+                    }
+
+                    oStack.push("local"+Integer.toString(i.index));
+                    break;
+                case "ldc":
+                    oStack.push(this.cr.ResolveCPIndex(i.index));
+                    break;
+                case "getstatic":
+                    oStack.push(this.cr.ResolveCPIndex(i.index));
+                    break;
+                case "return":
+                    sub.finalStack.push("return;");
+                    break;
+                case "invokevirtual":
+                case "invokespecial":
+                    parseInvoke(i, sub);
+                    break;
+                    
+                default:
+                    throw new AssertionError();
+            }
+        }
+
+        private void parseInvoke(Instruction i, Subroutine sub) {
+            if (i.type.equals("invokevirtual")) {
+                String c = oStack.pop().toString();
+                String l = oStack.pop().toString();
+                String s = this.cr.ResolveCPIndex(i.index);
+                sub.finalStack.push(l + "." + s + "(" + c + ")" + ";");
+            }
         }
 
         private String resolveType(String s) {

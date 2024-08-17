@@ -1,5 +1,6 @@
 
 import java.util.List;
+import java.util.Stack;
 
 abstract class astNode {
     public abstract String toString(String indent);
@@ -34,14 +35,14 @@ class ClassDeclaration extends astNode {
 class Subroutine extends astNode {
     String accessFlags, type, name;
     List<Parameter> params;
-    List<Statement> instructions;
+    Stack<String> finalStack = new Stack<String>();
+    Stack<String> outputStack = new Stack<String>();
 
-    public Subroutine(String flags, String type, String name, List<Parameter> params, List<Statement> instructions) {
+    public Subroutine(String flags, String type, String name, List<Parameter> params) {
         this.accessFlags = flags;
         this.type = type;
         this.name = name;
         this.params = params;
-        this.instructions = instructions;
     }
 
     @Override
@@ -57,9 +58,13 @@ class Subroutine extends astNode {
         s.append(") {\n");
         
         String statIndent = indent + "\t";
-        for (Statement stat : this.instructions) {
-            s.append(stat.toString(statIndent)).append("\n");
+        while (!finalStack.isEmpty()) {
+            outputStack.push(finalStack.pop());
         }
+        while(!outputStack.isEmpty()) {
+            s.append(statIndent).append(outputStack.pop()).append("\n");
+        }
+
         s.append(indent).append("}");
         return s.toString();
     }

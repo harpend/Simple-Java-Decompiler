@@ -1,3 +1,5 @@
+package parser;
+import com.sun.source.tree.AssertTree;
 import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -5,6 +7,8 @@ import java.util.Dictionary;
 import java.util.List;
 import java.util.Stack;
 import javax.security.auth.login.CredentialException;
+
+import parser.ast.*;
 
 public class ClassParser {
         boolean forOrWhile, newArray=false, skipFinish = false;
@@ -29,12 +33,12 @@ public class ClassParser {
         Stack fieldStack = new Stack(); //stores field data
         Stack finalStack = new Stack(); //stores final java code
 
-        public ClassDeclaration ParseClass() {
+        public parser.ast.ClassDeclaration ParseClass() {
             this.cr = new ClassReader();
             cr.ReadClass("./tests/test.class");
             String flags = String.join(" ", this.cr.accessFlags);
             String name = this.cr.ResolveCPIndex(this.cr.thisClass);
-            List<Subroutine> s = parseSubroutines();
+            List<parser.ast.Subroutine> s = parseSubroutines();
             return new ClassDeclaration(flags, name, s);
         }
 

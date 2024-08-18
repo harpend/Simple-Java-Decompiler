@@ -1,3 +1,4 @@
+package parser;
 public class Instruction {
     public String type;
     public int index;

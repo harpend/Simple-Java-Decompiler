@@ -7,6 +7,7 @@ public class Statement extends astNode {
         this.statement = statement;
     }
 
+    @Override
     public String toString(String indent) {
         return indent + this.statement;
     }

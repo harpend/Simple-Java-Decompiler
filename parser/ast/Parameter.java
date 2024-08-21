@@ -8,6 +8,7 @@ public class Parameter extends astNode {
         this.name = name;
     }
 
+    @Override
     public String toString(String indent) {
         return indent + this.type + " " + this.name;
     }

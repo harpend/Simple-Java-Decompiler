@@ -458,6 +458,10 @@ public class ClassReader {
                 case (byte)0x0F:
                 codeEl.add(new Instruction("dconst_1", 0));
                 break;
+                case (byte)0x10:
+                b1[0] = codeBytes[++i];
+                codeEl.add(new Instruction("bipush", concatByteToInt(b1)));
+                break;
                 case (byte)0x12:
                 b1[0] = codeBytes[++i];
                 codeEl.add(new Instruction("ldc", concatByteToInt(b1)));
@@ -466,8 +470,26 @@ public class ClassReader {
                 b1[0] = codeBytes[++i];
                 codeEl.add(new Instruction("dload", concatByteToInt(b1)));
                 break;
+                case (byte)0x1a:
+                codeEl.add(new Instruction("iload_0", 0));
+                break;
+                case (byte)0x1b:
+                codeEl.add(new Instruction("iload_1", 0));
+                break;
                 case (byte)0x2a:
                 codeEl.add(new Instruction("aload_0", 0));
+                break;
+                case (byte)0x3c:
+                codeEl.add(new Instruction("istore_1", 0));
+                break;
+                case (byte)0x49:
+                codeEl.add(new Instruction("dstore_1", 0));
+                break;
+                case (byte)0x87:
+                codeEl.add(new Instruction("i2d", 0));
+                break;
+                case (byte)0xaf:
+                codeEl.add(new Instruction("dreturn", 0));
                 break;
                 case (byte)0xb1:
                 codeEl.add(new Instruction("return", 0));
@@ -487,9 +509,15 @@ public class ClassReader {
                 b2[1] = codeBytes[++i];
                 codeEl.add(new Instruction("invokespecial", concatByteToInt(b2)));
                 break;    
+                case (byte)0xb8:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                codeEl.add(new Instruction("invokestatic", concatByteToInt(b2)));
+                break;    
             default:
                 System.out.println("Bytecode type not implemented yet");
-                System.out.println(b);
+                String hexString = String.format("%02X", b);
+                System.out.println(hexString);
                 System.exit(1);
             }
         }

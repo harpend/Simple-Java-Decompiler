@@ -12,6 +12,7 @@ public class ClassDeclaration extends astNode {
         this.subroutines = subroutines;
     }
 
+    @Override
     public String toString(String indent) {
         StringBuilder s = new StringBuilder();
         s.append(indent).append(this.accessFlags).append(" ").append("class ").append(this.name).append(" {\n");
@@ -23,6 +24,7 @@ public class ClassDeclaration extends astNode {
         return s.toString();
     }
 
+    @Override
     public String toString() {
         return toString("");
     }

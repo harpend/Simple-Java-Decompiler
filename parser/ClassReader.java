@@ -474,16 +474,16 @@ public class ClassReader {
                 codeEl.add(new Instruction("iload_0", 0));
                 break;
                 case (byte)0x1b:
-                codeEl.add(new Instruction("iload_1", 0));
+                codeEl.add(new Instruction("iload_1", 1));
                 break;
                 case (byte)0x2a:
                 codeEl.add(new Instruction("aload_0", 0));
                 break;
                 case (byte)0x3c:
-                codeEl.add(new Instruction("istore_1", 0));
+                codeEl.add(new Instruction("istore_1", 1));
                 break;
                 case (byte)0x49:
-                codeEl.add(new Instruction("dstore_1", 0));
+                codeEl.add(new Instruction("dstore_1", 1));
                 break;
                 case (byte)0x87:
                 codeEl.add(new Instruction("i2d", 0));

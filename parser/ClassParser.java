@@ -51,6 +51,7 @@ public class ClassParser {
         }
 
         private Subroutine parseSubroutine(ClassReader cr, int i) {
+            int localCount = 0;
             Dictionary<String, Object> subDict = this.cr.methods.get(i);
             List<String> accessFlagsList = (List<String>)subDict.get("access_flags");
             String flags = String.join(" ", accessFlagsList);
@@ -59,9 +60,10 @@ public class ClassParser {
             int descriptorIndex = (int)subDict.get("descriptor_index");
             String paramsAndType = this.cr.ResolveCPIndex(descriptorIndex);
             String types = resolveType(paramsAndType);
-            List<Parameter> params = resolveParameters(paramsAndType);
             List<Dictionary<String, Object>> instructions = (List<Dictionary<String, Object>>)subDict.get("attributes");
-            Subroutine s = new Subroutine(flags, types, name, params);
+            Subroutine s = new Subroutine(flags, types, name, localCount);
+            List<Parameter> params = resolveParameters(paramsAndType, s);
+            s.setParams(params);
             parseInstructions(cr, instructions, s);
             return s;
         }
@@ -83,16 +85,34 @@ public class ClassParser {
         }
 
         private void parseInstruction(Instruction i, Subroutine sub) {
+            String s = "";
+            String stype = "";
             switch (i.type) {
                 case "aload_0":
-                    if (!varsInUse.get(i.index)) {
-                        varsInUse.set(i.index);
+                case "iload_0":
+                case "iload_1":
+                    if (!varsInUse.get(sub.localCount)) {
+                        varsInUse.set(sub.localCount);
                     }
 
-                    oStack.push("local"+Integer.toString(i.index));
-                    break;
+                    oStack.push("local"+sub.localCount);
+                    sub.localCount++;
+                    break;              
                 case "ldc":
                     oStack.push(this.cr.ResolveCPIndex(i.index));
+                    break;
+                case "istore_1":
+                case "dstore_1":
+                    stype = typeFromStoreInstruction(i.type);
+                    if (!oStack.empty()) {
+                        s = oStack.pop().toString();
+                        if (varsInUse.get(sub.localCount)) {
+                            sub.finalStack.push(stype + "local" + sub.localCount + " = " + s + ";");
+                        } else {
+                            sub.finalStack.push(stype + "local" + sub.localCount + " = " + s + ";");
+                            varsInUse.set(sub.localCount);
+                        }
+                    }
                     break;
                 case "getstatic":
                     oStack.push(this.cr.ResolveCPIndex(i.index));
@@ -100,11 +120,25 @@ public class ClassParser {
                 case "return":
                     sub.finalStack.push("return;");
                     break;
+                case "dreturn":
+                    if (!oStack.empty()) {
+                        s = oStack.pop().toString();
+                        sub.finalStack.push("return " + s + ";");
+                    }
+                    break;
                 case "invokevirtual":
                 case "invokespecial":
+                case "invokestatic":
                     parseInvoke(i, sub);
                     break;
-                    
+                case "bipush":
+                    // pushes from CPIndex 12
+                    oStack.push(i.index);
+                    break;
+                case "i2d":
+                    s = oStack.pop().toString();
+                    oStack.push("(double) " + s);
+                    break;
                 default:
                     System.out.println("type not implemented: " + i.type);
                     System.exit(1);
@@ -119,6 +153,30 @@ public class ClassParser {
                 sub.finalStack.push(l + "." + s + "(" + c + ")" + ";");
             } else if (i.type.equals("invokespecial")) {
                 oStack.pop();
+            } else if (i.type.equals("invokestatic")) {
+                // need to resolve type index string so that it can be stored as long as it isn't void
+                String c = oStack.pop().toString();
+                String s = this.cr.ResolveCPIndex(i.index);
+                if (resolveType(s).equals("void")) {
+                    sub.finalStack.push(s + "(" + c + ");");
+                } else {
+                    oStack.push(s + "(" + c + ");");
+                }
+            }
+        }
+
+        private String typeFromStoreInstruction(String type) {
+            int index = type.indexOf('s');
+            String subString = type.substring(0, index);
+            switch (subString) {
+                case "i":
+                    return "int ";
+                case "d": 
+                    return "double ";
+                default:
+                    System.out.println("unknown type of store instruction: " + subString);
+                    System.exit(1);
+            return "";
             }
         }
 
@@ -153,7 +211,7 @@ public class ClassParser {
             return ret;
         }
 
-        private List<Parameter> resolveParameters(String s) {
+        private List<Parameter> resolveParameters(String s, Subroutine sub) {
             List<Parameter> parameters = new ArrayList<>();
             int openingParenIndex = s.indexOf('(');
             int closingParenIndex = s.indexOf(')');
@@ -161,33 +219,34 @@ public class ClassParser {
             if (openingParenIndex != -1 && closingParenIndex != -1 && openingParenIndex < closingParenIndex) {
                 String paramPart = s.substring(openingParenIndex + 1, closingParenIndex);
 
-                for (int i = 0; i < paramPart.length(); i++) {
-                    char typeChar = paramPart.charAt(i);
-                    String name = "param" + i;
+                for (; sub.localCount < paramPart.length(); sub.localCount++) {
+                    char typeChar = paramPart.charAt(sub.localCount);
+                    String name = "local" + sub.localCount;
+                    varsInUse.set(sub.localCount);
                     String javaType = null;
 
                     if (typeChar == 'L') {
-                        int semicolonIndex = paramPart.indexOf(';', i);
+                        int semicolonIndex = paramPart.indexOf(';', sub.localCount);
                         if (semicolonIndex != -1) {
                             // Convert the class type descriptor to a human-readable format
-                            javaType = paramPart.substring(i + 1, semicolonIndex).replace("java/lang/", "");
-                            i = semicolonIndex;
+                            javaType = paramPart.substring(sub.localCount + 1, semicolonIndex).replace("java/lang/", "");
+                            sub.localCount = semicolonIndex;
                         } else {
                             throw new IllegalArgumentException("Invalid method descriptor");
                         }
                     } else if (typeChar == '[') {
                         StringBuilder arrayType = new StringBuilder();
-                        while (paramPart.charAt(i) == '[') {
+                        while (paramPart.charAt(sub.localCount) == '[') {
                             arrayType.append("[]");
-                            i++;
+                            sub.localCount++;
                         }
-                        char arrayBaseType = paramPart.charAt(i);
+                        char arrayBaseType = paramPart.charAt(sub.localCount);
                         if (arrayBaseType == 'L') {
-                            int semicolonIndex = paramPart.indexOf(';', i);
+                            int semicolonIndex = paramPart.indexOf(';', sub.localCount);
                             if (semicolonIndex != -1) {
-                                javaType = paramPart.substring(i + 1, semicolonIndex).replace("java/lang/", "");
+                                javaType = paramPart.substring(sub.localCount + 1, semicolonIndex).replace("java/lang/", "");
                                 arrayType.insert(0, javaType);
-                                i = semicolonIndex;
+                                sub.localCount = semicolonIndex;
                             } else {
                                 throw new IllegalArgumentException("Invalid method descriptor");
                             }

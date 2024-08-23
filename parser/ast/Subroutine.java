@@ -1,19 +1,29 @@
 package parser.ast;
 
+import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 
 public class Subroutine extends astNode {
-    String accessFlags, type, name;
+    public String accessFlags, type, name;
+    public Map<Integer, Object> variablesMap;
     List<Parameter> params;
     public Stack<String> finalStack = new Stack<String>();
     Stack<String> outputStack = new Stack<String>();
+    public int localCount;
 
-    public Subroutine(String flags, String type, String name, List<Parameter> params) {
+    public Subroutine(String flags, String type, String name, int localCount) {
         this.accessFlags = flags;
         this.type = type;
         this.name = name;
+        this.variablesMap = new HashMap<>();
+        this.localCount = 0;
+    }
+
+    public void setParams(List<Parameter> params) {
         this.params = params;
     }
 

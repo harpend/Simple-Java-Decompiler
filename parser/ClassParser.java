@@ -35,7 +35,7 @@ public class ClassParser {
 
         public parser.ast.ClassDeclaration ParseClass() {
             this.cr = new ClassReader();
-            cr.ReadClass("./tests/test2.class");
+            cr.ReadClass("./tests/test.class");
             String flags = String.join(" ", this.cr.accessFlags);
             String name = this.cr.ResolveCPIndex(this.cr.thisClass);
             List<parser.ast.Subroutine> s = parseSubroutines();
@@ -91,12 +91,17 @@ public class ClassParser {
                 case "aload_0":
                 case "iload_0":
                 case "iload_1":
+                    if (i.index > sub.localCount-1){
+                        stype = typeFromLoadInstruction(i.type);
+                    } else {
+                        stype = "";
+                    }
+
                     if (!varsInUse.get(sub.localCount)) {
                         varsInUse.set(sub.localCount);
                     }
 
-                    oStack.push("local"+sub.localCount);
-                    sub.localCount++;
+                    oStack.push("local"+ stype.trim() + i.index);
                     break;              
                 case "ldc":
                     oStack.push(this.cr.ResolveCPIndex(i.index));
@@ -107,9 +112,9 @@ public class ClassParser {
                     if (!oStack.empty()) {
                         s = oStack.pop().toString();
                         if (varsInUse.get(sub.localCount)) {
-                            sub.finalStack.push(stype + "local" + sub.localCount + " = " + s + ";");
+                            sub.finalStack.push(stype + "local" + stype.trim() + i.index + " = " + s + ";");
                         } else {
-                            sub.finalStack.push(stype + "local" + sub.localCount + " = " + s + ";");
+                            sub.finalStack.push(stype + "local" + stype.trim() + i.index + " = " + s + ";");
                             varsInUse.set(sub.localCount);
                         }
                     }
@@ -160,7 +165,7 @@ public class ClassParser {
                 if (resolveType(s).equals("void")) {
                     sub.finalStack.push(s + "(" + c + ");");
                 } else {
-                    oStack.push(s + "(" + c + ");");
+                    oStack.push(s + "(" + c + ")");
                 }
             }
         }
@@ -173,6 +178,23 @@ public class ClassParser {
                     return "int ";
                 case "d": 
                     return "double ";
+                default:
+                    System.out.println("unknown type of store instruction: " + subString);
+                    System.exit(1);
+            return "";
+            }
+        }
+
+        private String typeFromLoadInstruction(String type) {
+            int index = type.indexOf('l');
+            String subString = type.substring(0, index);
+            switch (subString) {
+                case "i":
+                    return "int ";
+                case "d": 
+                    return "double ";
+                case "a":
+                    return "";
                 default:
                     System.out.println("unknown type of store instruction: " + subString);
                     System.exit(1);
@@ -219,34 +241,35 @@ public class ClassParser {
             if (openingParenIndex != -1 && closingParenIndex != -1 && openingParenIndex < closingParenIndex) {
                 String paramPart = s.substring(openingParenIndex + 1, closingParenIndex);
 
-                for (; sub.localCount < paramPart.length(); sub.localCount++) {
-                    char typeChar = paramPart.charAt(sub.localCount);
-                    String name = "local" + sub.localCount;
-                    varsInUse.set(sub.localCount);
+                for (int i = 0; i < paramPart.length(); i++) {
+                    char typeChar = paramPart.charAt(i);
+                    sub.localCount++;
+                    String name = "local" + (sub.localCount-1);
+                    varsInUse.set(sub.localCount-1);
                     String javaType = null;
 
                     if (typeChar == 'L') {
-                        int semicolonIndex = paramPart.indexOf(';', sub.localCount);
+                        int semicolonIndex = paramPart.indexOf(';', i);
                         if (semicolonIndex != -1) {
                             // Convert the class type descriptor to a human-readable format
-                            javaType = paramPart.substring(sub.localCount + 1, semicolonIndex).replace("java/lang/", "");
-                            sub.localCount = semicolonIndex;
+                            javaType = paramPart.substring(i + 1, semicolonIndex).replace("java/lang/", "");
+                            i = semicolonIndex;
                         } else {
                             throw new IllegalArgumentException("Invalid method descriptor");
                         }
                     } else if (typeChar == '[') {
                         StringBuilder arrayType = new StringBuilder();
-                        while (paramPart.charAt(sub.localCount) == '[') {
+                        while (paramPart.charAt(i) == '[') {
                             arrayType.append("[]");
-                            sub.localCount++;
+                            i++;
                         }
-                        char arrayBaseType = paramPart.charAt(sub.localCount);
+                        char arrayBaseType = paramPart.charAt(i);
                         if (arrayBaseType == 'L') {
-                            int semicolonIndex = paramPart.indexOf(';', sub.localCount);
+                            int semicolonIndex = paramPart.indexOf(';', i);
                             if (semicolonIndex != -1) {
-                                javaType = paramPart.substring(sub.localCount + 1, semicolonIndex).replace("java/lang/", "");
+                                javaType = paramPart.substring(i + 1, semicolonIndex).replace("java/lang/", "");
                                 arrayType.insert(0, javaType);
-                                sub.localCount = semicolonIndex;
+                                i = semicolonIndex;
                             } else {
                                 throw new IllegalArgumentException("Invalid method descriptor");
                             }
@@ -264,7 +287,7 @@ public class ClassParser {
             } else {
                 throw new IllegalArgumentException("Invalid method descriptor");
             }
-        
+            
             return parameters;
         }
 

@@ -35,7 +35,7 @@ public class ClassParser {
 
         public parser.ast.ClassDeclaration ParseClass() {
             this.cr = new ClassReader();
-            cr.ReadClass("./tests/test.class");
+            cr.ReadClass("./tests/test3.class");
             String flags = String.join(" ", this.cr.accessFlags);
             String name = this.cr.ResolveCPIndex(this.cr.thisClass);
             List<parser.ast.Subroutine> s = parseSubroutines();

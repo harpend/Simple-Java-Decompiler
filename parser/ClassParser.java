@@ -91,7 +91,7 @@ public class ClassParser {
                 case "aload_0":
                 case "iload_0":
                 case "iload_1":
-                    if (i.index > sub.localCount-1){
+                    if (i.index1 > sub.localCount-1){
                         stype = typeFromLoadInstruction(i.type);
                     } else {
                         stype = "";
@@ -101,26 +101,27 @@ public class ClassParser {
                         varsInUse.set(sub.localCount);
                     }
 
-                    oStack.push("local"+ stype.trim() + i.index);
+                    oStack.push("local" + i.index1);
                     break;              
                 case "ldc":
-                    oStack.push(this.cr.ResolveCPIndex(i.index));
+                    oStack.push(this.cr.ResolveCPIndex(i.index1));
                     break;
                 case "istore_1":
                 case "dstore_1":
+                case "dstore_2":
                     stype = typeFromStoreInstruction(i.type);
                     if (!oStack.empty()) {
                         s = oStack.pop().toString();
                         if (varsInUse.get(sub.localCount)) {
-                            sub.finalStack.push(stype + "local" + stype.trim() + i.index + " = " + s + ";");
+                            sub.finalStack.push(stype + "local" + i.index1 + " = " + s + ";");
                         } else {
-                            sub.finalStack.push(stype + "local" + stype.trim() + i.index + " = " + s + ";");
+                            sub.finalStack.push(stype + "local" + i.index1 + " = " + s + ";");
                             varsInUse.set(sub.localCount);
                         }
                     }
                     break;
                 case "getstatic":
-                    oStack.push(this.cr.ResolveCPIndex(i.index));
+                    oStack.push(this.cr.ResolveCPIndex(i.index1));
                     break;
                 case "return":
                     sub.finalStack.push("return;");
@@ -138,7 +139,7 @@ public class ClassParser {
                     break;
                 case "bipush":
                     // pushes from CPIndex 12
-                    oStack.push(i.index);
+                    oStack.push(i.index1);
                     break;
                 case "i2d":
                     s = oStack.pop().toString();
@@ -154,14 +155,14 @@ public class ClassParser {
             if (i.type.equals("invokevirtual")) {
                 String c = oStack.pop().toString();
                 String l = oStack.pop().toString().replace("java/lang/", "");
-                String s = this.cr.ResolveCPIndex(i.index);
+                String s = this.cr.ResolveCPIndex(i.index1);
                 sub.finalStack.push(l + "." + s + "(" + c + ")" + ";");
             } else if (i.type.equals("invokespecial")) {
                 oStack.pop();
             } else if (i.type.equals("invokestatic")) {
                 // need to resolve type index string so that it can be stored as long as it isn't void
                 String c = oStack.pop().toString();
-                String s = this.cr.ResolveCPIndex(i.index);
+                String s = this.cr.ResolveCPIndex(i.index1);
                 if (resolveType(s).equals("void")) {
                     sub.finalStack.push(s + "(" + c + ");");
                 } else {
@@ -179,7 +180,7 @@ public class ClassParser {
                 case "d": 
                     return "double ";
                 default:
-                    System.out.println("unknown type of store instruction: " + subString);
+                    System.out.println("unknown type of load instruction: " + subString);
                     System.exit(1);
             return "";
             }

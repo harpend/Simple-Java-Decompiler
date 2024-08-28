@@ -91,6 +91,8 @@ public class ClassParser {
                 case "aload_0":
                 case "iload_0":
                 case "iload_1":
+                case "iload_3":
+                case "dload_1":
                     if (i.index1 > sub.localCount-1){
                         stype = typeFromLoadInstruction(i.type);
                     } else {
@@ -106,7 +108,17 @@ public class ClassParser {
                 case "ldc":
                     oStack.push(this.cr.ResolveCPIndex(i.index1));
                     break;
+                case "dconst_0":
+                    oStack.push("0.0");
+                    break;
+                case "iconst_3":
+                    oStack.push("3");
+                    break;
+                case "iconst_5":
+                    oStack.push("5");
+                    break;
                 case "istore_1":
+                case "istore_3":
                 case "dstore_1":
                 case "dstore_2":
                     stype = typeFromStoreInstruction(i.type);
@@ -144,6 +156,43 @@ public class ClassParser {
                 case "i2d":
                     s = oStack.pop().toString();
                     oStack.push("(double) " + s);
+                    break;
+                case "iinc":
+                    if (i.index2 <= 0) {
+                        if (i.index2 == -1) {
+                            sub.finalStack.push("local" + i.index1 + "--;");
+                        } else {
+                            sub.finalStack.push("local" + i.index1 + " -= " + i.index2 + ";");
+                        }
+                    } else if (i.index2 > 0) {
+                        if (i.index2 == 1) {
+                            sub.finalStack.push("local" + i.index1 + "++;");
+                            
+                        } else {
+                            sub.finalStack.push("local" + i.index1 + " += " + i.index2 + ";");
+                        }
+                    }
+                    break;
+                case "imul":
+                case "idiv":
+                    String opString = "";
+                    if (i.type.equals("imul")) {
+                        opString = "*";
+                    } else if (i.type.equals("idiv")) {
+                        opString = "/";
+                    }
+                    temp = oStack.pop();
+                    if (temp.toString().indexOf("+") == -1 && temp.toString().indexOf("-") == -1 && temp.toString().indexOf("*") == -1 && temp.toString().indexOf("/") == -1 && oStack.peek().toString().indexOf("+") == -1 && oStack.peek().toString().indexOf("-") == -1 && oStack.peek().toString().indexOf("*") == -1 && oStack.peek().toString().indexOf("/") == -1)
+                        oStack.push(oStack.pop().toString() + " * " + temp.toString()); 
+                    else if (temp.toString().indexOf("+") == -1 && temp.toString().indexOf("-") == -1 && temp.toString().indexOf("*") == -1 && temp.toString().indexOf("/") == -1)
+                        oStack.push("(" + oStack.pop().toString() + ") " + opString + temp.toString()); 
+                    else if (oStack.peek().toString().indexOf("+") == -1 && oStack.peek().toString().indexOf("-") == -1 && oStack.peek().toString().indexOf("*") == -1 && oStack.peek().toString().indexOf("/") == -1 )
+                        oStack.push(oStack.pop().toString() + opString + " (" + temp.toString()+") "); 
+                    else 
+                        oStack.push("(" + oStack.pop().toString() + ") " + opString + " (" + temp.toString()+")"); 
+                    break;
+                case "dadd":
+                    oStack.push(oStack.pop().toString() + " + " + oStack.pop().toString());
                     break;
                 default:
                     System.out.println("type not implemented: " + i.type);

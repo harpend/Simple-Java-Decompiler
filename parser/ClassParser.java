@@ -162,7 +162,7 @@ public class ClassParser {
                         if (i.index2 == -1) {
                             sub.finalStack.push("local" + i.index1 + "--;");
                         } else {
-                            sub.finalStack.push("local" + i.index1 + " -= " + i.index2 + ";");
+                            sub.finalStack.push("local" + i.index1 + " -= " + (-1*i.index2) + ";");
                         }
                     } else if (i.index2 > 0) {
                         if (i.index2 == 1) {

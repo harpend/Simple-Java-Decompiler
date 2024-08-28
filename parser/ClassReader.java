@@ -589,12 +589,19 @@ public class ClassReader {
 
     private int concatSignedByteToInt(byte[] bytes, int excessN) {
         int value = 0;
-        for (int i = 0; i < bytes.length; i++) {
-            value = (value << 8) | (bytes[i] & 0xFF);
+        
+        if ((bytes[0] & 0x80) != 0) {
+            for (int i = 0; i < bytes.length; i++) {
+                value = (value << 8) | (~bytes[i] & 0xFF);
+            }
+
+            value = -value - 1;
+        } else {
+            for (int i = 0; i < bytes.length; i++) {
+                value = (value << 8) | (bytes[i] & 0xFF);
+            }
         }
-    
-        value -= excessN;
-    
+        
         return value;
     }
 

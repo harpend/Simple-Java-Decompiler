@@ -20,7 +20,7 @@ The aim is to get it into a format that can be easily parsed.
 this is done very simply by managing stack
 
 ### Stage 3 decompile simple programs from book --Current
-Currently on example 3/9
+Currently on example 4/9
 
 ### Stage 4 decompile more complicated programs --TODO
 

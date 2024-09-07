@@ -471,98 +471,102 @@ public class ClassReader {
         byte[] b2 = new byte[2];
         int b1int;
         int b2int;
+        int pc = 0;
         for (int i = 0; i < codeLength; i++) {
             byte b = codeBytes[i];
             switch (b) {
             case (byte)0x00:
-                codeEl.add(new Instruction("nop", 0, 0));
+                codeEl.add(new Instruction(pc, "nop", 0, 0));
                 break;
             case (byte)0x01:
-                codeEl.add(new Instruction("aconst_null", 0, 0));
+                codeEl.add(new Instruction(pc, "aconst_null", 0, 0));
                 break;
             case (byte)0x02:
-                codeEl.add(new Instruction("iconst_m1", 0, 0));
+                codeEl.add(new Instruction(pc, "iconst_m1", 0, 0));
                 break;
                 case (byte)0x03:
-                codeEl.add(new Instruction("iconst_0", 0, 0));
+                codeEl.add(new Instruction(pc, "iconst_0", 0, 0));
                 break;
                 case (byte)0x04:
-                codeEl.add(new Instruction("iconst_1", 0, 0));
+                codeEl.add(new Instruction(pc, "iconst_1", 0, 0));
                 break;
                 case (byte)0x05:
-                codeEl.add(new Instruction("iconst_2", 0, 0));
+                codeEl.add(new Instruction(pc, "iconst_2", 0, 0));
                 break;
                 case (byte)0x06:
-                codeEl.add(new Instruction("iconst_3", 0, 0));
+                codeEl.add(new Instruction(pc, "iconst_3", 0, 0));
                 break;
                 case (byte)0x07:
-                codeEl.add(new Instruction("iconst_4", 0, 0));
+                codeEl.add(new Instruction(pc, "iconst_4", 0, 0));
                 break;
                 case (byte)0x08:
-                codeEl.add(new Instruction("iconst_5", 0, 0));
+                codeEl.add(new Instruction(pc, "iconst_5", 0, 0));
                 break;
                 case (byte)0x09:
-                codeEl.add(new Instruction("lconst_0", 0, 0));
+                codeEl.add(new Instruction(pc, "lconst_0", 0, 0));
                 break;
                 case (byte)0x0A:
-                codeEl.add(new Instruction("lconst_1", 0, 0));
+                codeEl.add(new Instruction(pc, "lconst_1", 0, 0));
                 break;
                 case (byte)0x0D:
-                codeEl.add(new Instruction("fconst_2", 0, 0));
+                codeEl.add(new Instruction(pc, "fconst_2", 0, 0));
                 break;
                 case (byte)0x0E:
-                codeEl.add(new Instruction("dconst_0", concatByteToInt(b1), 0));
+                codeEl.add(new Instruction(pc, "dconst_0", 0, 0));
                 break;
                 case (byte)0x0F:
-                codeEl.add(new Instruction("dconst_1", 0, 0));
+                codeEl.add(new Instruction(pc, "dconst_1", 0, 0));
                 break;
                 case (byte)0x10:
                 b1[0] = codeBytes[++i];
-                codeEl.add(new Instruction("bipush", concatByteToInt(b1), 0));
+                codeEl.add(new Instruction(pc, "bipush", concatByteToInt(b1), 0));
+                pc++;
                 break;
                 case (byte)0x12:
                 b1[0] = codeBytes[++i];
-                codeEl.add(new Instruction("ldc", concatByteToInt(b1), 0));
+                codeEl.add(new Instruction(pc, "ldc", concatByteToInt(b1), 0));
+                pc++;
                 break;
                 case (byte)0x18:
                 b1[0] = codeBytes[++i];
-                codeEl.add(new Instruction("dload", concatByteToInt(b1), 0));
+                codeEl.add(new Instruction(pc, "dload", concatByteToInt(b1), 0));
+                pc++;
                 break;
                 case (byte)0x1A:
-                codeEl.add(new Instruction("iload_0", 0, 0));
+                codeEl.add(new Instruction(pc, "iload_0", 0, 0));
                 break;
                 case (byte)0x1B:
-                codeEl.add(new Instruction("iload_1", 1, 0));
+                codeEl.add(new Instruction(pc, "iload_1", 1, 0));
                 break;
                 case (byte)0x1D:
-                codeEl.add(new Instruction("iload_3", 3, 0));
+                codeEl.add(new Instruction(pc, "iload_3", 3, 0));
                 break;
                 case (byte)0x27:
-                codeEl.add(new Instruction("dload_1", 1, 0));
+                codeEl.add(new Instruction(pc, "dload_1", 1, 0));
                 break;
                 case (byte)0x2A:
-                codeEl.add(new Instruction("aload_0", 0, 0));
+                codeEl.add(new Instruction(pc, "aload_0", 0, 0));
                 break;
                 case (byte)0x3C:
-                codeEl.add(new Instruction("istore_1", 1, 0));
+                codeEl.add(new Instruction(pc, "istore_1", 1, 0));
                 break;
                 case (byte)0x3E:
-                codeEl.add(new Instruction("istore_3", 3, 0));
+                codeEl.add(new Instruction(pc, "istore_3", 3, 0));
                 break;
                 case (byte)0x48:
-                codeEl.add(new Instruction("dstore_1", 1, 0));
+                codeEl.add(new Instruction(pc, "dstore_1", 1, 0));
                 break;
                 case (byte)0x49:
-                codeEl.add(new Instruction("dstore_2", 2, 0));
+                codeEl.add(new Instruction(pc, "dstore_2", 2, 0));
                 break;
                 case (byte)0x63:
-                codeEl.add(new Instruction("dadd", 0, 0));
+                codeEl.add(new Instruction(pc, "dadd", 0, 0));
                 break;
                 case (byte)0x68:
-                codeEl.add(new Instruction("imul", 0, 0));
+                codeEl.add(new Instruction(pc, "imul", 0, 0));
                 break;
                 case (byte)0x6C:
-                codeEl.add(new Instruction("idiv", 0, 0));
+                codeEl.add(new Instruction(pc, "idiv", 0, 0));
                 break;
                 case (byte)0x84:
                 if (wide) {
@@ -572,49 +576,56 @@ public class ClassReader {
                     b2[0] = codeBytes[++i];
                     b2[1] = codeBytes[++i];
                     b2int = concatSignedByteToInt(b2, 0x8000);
-                    codeEl.add(new Instruction("iinc", b1int, b2int));
+                    codeEl.add(new Instruction(pc, "iinc", b1int, b2int));
+                    pc+=4;
                 } else {
                     b1[0] = codeBytes[++i];
                     b1int = concatByteToInt(b1);
                     b1[0] = codeBytes[++i];
                     b2int = concatSignedByteToInt(b1, 0x80);
-                    codeEl.add(new Instruction("iinc", b1int, b2int));
+                    codeEl.add(new Instruction(pc, "iinc", b1int, b2int));
+                    pc++;pc++;
                 }
                 break;
                 case (byte)0x87:
-                codeEl.add(new Instruction("i2d", 0, 0));
+                codeEl.add(new Instruction(pc, "i2d", 0, 0));
                 break;
                 case (byte)0xA4:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
                 b2[1] += i;
-                codeEl.add(new Instruction("if_icmple", concatByteToInt(b2), 0));
+                codeEl.add(new Instruction(pc, "if_icmple", concatByteToInt(b2), 0));
+                pc++;pc++;
                 break;
                 case (byte)0xAF:
-                codeEl.add(new Instruction("dreturn", 0, 0));
+                codeEl.add(new Instruction(pc, "dreturn", 0, 0));
                 break;
                 case (byte)0xB1:
-                codeEl.add(new Instruction("return", 0, 0));
+                codeEl.add(new Instruction(pc, "return", 0, 0));
                 break;    
                 case (byte)0xB2:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                codeEl.add(new Instruction("getstatic", concatByteToInt(b2), 0));
+                codeEl.add(new Instruction(pc, "getstatic", concatByteToInt(b2), 0));
+                pc++;pc++;
                 break;    
                 case (byte)0xB6:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                codeEl.add(new Instruction("invokevirtual", concatByteToInt(b2), 0));
+                codeEl.add(new Instruction(pc, "invokevirtual", concatByteToInt(b2), 0));
+                pc++;pc++;
                 break;    
                 case (byte)0xB7:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                codeEl.add(new Instruction("invokespecial", concatByteToInt(b2), 0));
+                codeEl.add(new Instruction(pc, "invokespecial", concatByteToInt(b2), 0));
+                pc++;pc++;
                 break;    
                 case (byte)0xB8:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                codeEl.add(new Instruction("invokestatic", concatByteToInt(b2), 0));
+                codeEl.add(new Instruction(pc, "invokestatic", concatByteToInt(b2), 0));
+                pc++;pc++;
                 break;    
             default:
                 System.out.println("Bytecode type not implemented yet");
@@ -622,6 +633,8 @@ public class ClassReader {
                 System.out.println(hexString);
                 System.exit(1);
             }
+
+            pc++;
         }
 
         int exceptionTableLength = getShort();

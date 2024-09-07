@@ -1,15 +1,21 @@
 # SimpleJavaDecompiler
 
-(Somewhat inspired by Decompiling Java - Godfrey Nolan)
+(Somewhat inspired by Decompiling Java - Godfrey Nolan and JD-Core - Emmanuel Dupuy)
 
 ##
 
-Building myself a java decompiler to understand how it works at a basic level. I plan to continue with decompilation further after successfully decompiling the example test cases from Godfrey's book. I borrow some inspiration from the book's techniques although in many ways I deviate such as not using a lexer/parser generator. Other items that have inspired me is Christina Cifuentes' phd paper on decompiling C, although I plan to take more direct inspiration from this when I have a go a decompiling C or another compiled language. 
+This decompiler is written entirely from scratch without use of parser generators, such as the ones used in Decompiling Java. For most instructions the process is simply done by keeping track of the stack and more complicated decompilation is done through the use of control flow graphs. The aim of this is to teach myself a basic overview of how decompilation works and prepare myself for more complicated decomplation such as a C decompiler.
 
 compile with: 
 
 `
 javac main.java parser/*.java parser/ast/*.java
+`
+
+run with:
+
+`
+java Main
 `
 
 ### Stage 1 Deserialisation

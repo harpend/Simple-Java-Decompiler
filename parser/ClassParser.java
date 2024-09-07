@@ -194,12 +194,19 @@ public class ClassParser {
                 case "dadd":
                     oStack.push(oStack.pop().toString() + " + " + oStack.pop().toString());
                     break;
+                case "if_cmple":
+                    parseIfCmp(i, sub);
+                    break;
                 default:
                     System.out.println("type not implemented: " + i.type);
                     System.exit(1);
             }
         }
 
+        private void parseIfCmp(Instruction i, Subroutine sub) {
+
+        }
+        
         private void parseInvoke(Instruction i, Subroutine sub) {
             if (i.type.equals("invokevirtual")) {
                 String c = oStack.pop().toString();

@@ -346,6 +346,7 @@ public class ClassReader {
           
             Dictionary<String, Object> codeInfo = null;
             Dictionary<String, Object> lineNumberTableInfo = null;
+            Dictionary<String, Object> stackMapTable = null;
             Dictionary<String, Object> sourceFileInfo = null;
             if (Arrays.equals(resolveNameIndex(attributeNameIndex), "Code".getBytes(StandardCharsets.UTF_8))) {
                 codeInfo = parseCode();
@@ -355,6 +356,10 @@ public class ClassReader {
                 lineNumberTableInfo = parseLineNumberTable();
                 el.put("info", lineNumberTableInfo);
             }
+            else if (Arrays.equals(resolveNameIndex(attributeNameIndex), "StackMapTable".getBytes(StandardCharsets.UTF_8))) {
+                stackMapTable = parseStackMapTable();
+                el.put("info", stackMapTable);
+            }
             else if (Arrays.equals(resolveNameIndex(attributeNameIndex), "SourceFile".getBytes(StandardCharsets.UTF_8))) {
                 int sfIndex = getShort();
                 el.put("sourcefile_index", sfIndex);
@@ -362,6 +367,7 @@ public class ClassReader {
             else {
                 System.out.println("attribute type not implemented");
                 System.out.println(new String(resolveNameIndex(attributeNameIndex), StandardCharsets.UTF_8));
+                System.exit(1);
             }
 
             el.put("attribute_name_index", attributeNameIndex);
@@ -375,6 +381,51 @@ public class ClassReader {
     private byte[] resolveNameIndex(int entry) {
         Dictionary<String, String> cpEntry = this.constantPool.get(entry - 1);
         return cpEntry.get("bytes").getBytes();
+    }
+
+    private Dictionary<String, Object> parseStackMapTable() throws IOException {
+        Dictionary<String, Object> stackMapTableAttr = new Hashtable<>();
+
+        int lineNumberTableLength = getShort();
+        List<Dictionary<String, Object>> stackMapFrame = new ArrayList<>();
+        
+        for (int i = 0; i < lineNumberTableLength; i++) {
+            Dictionary<String, Object> stackMapEntry = new Hashtable<>();
+            int frameType = getByte();
+            int offsetDelta = getShort();
+            stackMapEntry.put("frame_type", frameType);
+            stackMapEntry.put("offset_delta", offsetDelta);
+            List<Integer> frameElems = new ArrayList<>();
+
+            switch (frameType) {
+                case 252:
+                case 253:
+                case 254:
+                    for (int j = 0; j < (frameType-251); j++) {
+                        int varInfoTag = getByte();
+                        if (!(varInfoTag < 7)) {
+                            System.out.println("not supported varinfotag");
+                            System.exit(1);
+                        }   
+
+                        frameElems.add(varInfoTag);
+                    }
+
+                    stackMapEntry.put("verification_type_info", frameElems);
+                    break;
+                default:
+                    System.out.println("unsupported stack map table type");
+                    System.out.println(frameType);
+                    System.exit(1);
+            }
+
+            stackMapFrame.add(stackMapEntry);
+        }
+
+        stackMapTableAttr.put("number_of_entries", lineNumberTableLength);
+        stackMapTableAttr.put("stack_map_frame", stackMapFrame);
+
+        return stackMapTableAttr;
     }
 
     private Dictionary<String, Object> parseLineNumberTable() throws IOException {
@@ -496,7 +547,7 @@ public class ClassReader {
                 codeEl.add(new Instruction("istore_1", 1, 0));
                 break;
                 case (byte)0x3E:
-                codeEl.add(new Instruction("istore_3", 1, 0));
+                codeEl.add(new Instruction("istore_3", 3, 0));
                 break;
                 case (byte)0x48:
                 codeEl.add(new Instruction("dstore_1", 1, 0));
@@ -532,6 +583,12 @@ public class ClassReader {
                 break;
                 case (byte)0x87:
                 codeEl.add(new Instruction("i2d", 0, 0));
+                break;
+                case (byte)0xA4:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                b2[1] += i;
+                codeEl.add(new Instruction("if_icmple", concatByteToInt(b2), 0));
                 break;
                 case (byte)0xAF:
                 codeEl.add(new Instruction("dreturn", 0, 0));
@@ -653,6 +710,12 @@ public class ClassReader {
         }
 
         return tempString;
+    }
+
+    private int getByte() throws IOException {
+        byte[] b = new byte[1];
+        fis.read(b);
+        return b[0] & 0xFF;
     }
 
     private int getShort() throws IOException {

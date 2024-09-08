@@ -2,6 +2,7 @@ package parser.cfg;
 
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.HashSet;
 import java.util.List;
 import parser.Instruction;
 
@@ -9,28 +10,63 @@ public class ControlFlowGraph {
     private Dictionary<String, Object> method;
     private List<Instruction> instructions;
     private List<BasicBlock> bbList;
-    private BasicBlock curBB;
+    private HashSet<Integer> terminators;
+    private HashSet<Integer> leaders;
+    private HashSet<Integer> fall;
+    private boolean fallThrough = false;
+    private BasicBlock head = null;
+    private BasicBlock curBB = null;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
         this.instructions = new ArrayList<Instruction>();
         this.bbList = new ArrayList<BasicBlock>();
-        this.curBB = new BasicBlock(this, 0, "START", 0, 0, null);
-        this.bbList.add(this.curBB);
     }
 
     public Instruction addInstruction(Instruction i, boolean cfChange) {
-        this.instructions.add(i);
-        if (cfChange) {
-            // new basic block index can be calculated from length of bbList
-            // curBB can now point to the offset of the current instruction
-            // then toOffset is the last instruction of the curBB offset
-            // replace curBB with new BB
-        } else {
-            this.curBB.addInstruction(i);
+        if (fallThrough) {
+            leaders.add(i.line);
+            fallThrough = false;
         }
 
+        this.instructions.add(i);
+        if (cfChange) {
+            terminators.add(i.line);
+            if (i.type.equals("if_icmple")) {
+                leaders.add(i.index1);
+                fall.add(i.line);
+                fallThrough = true;
+            } else if (i.type.contains("invoke")) {
+                fall.add(i.line);
+                fallThrough = true;
+            } 
+        } 
+
         return i;
+    }
+
+    public void generateCFG() {
+        generateBBS();
+        linkBBS(); 
+    }
+
+    private void generateBBS() {
+        this.leaders.add(this.instructions.getFirst().line);
+        for (Instruction instruction : this.instructions) {
+            if (leaders.contains(instruction.line)) {
+                this.curBB = new BasicBlock(instruction);
+                this.bbList.add(curBB);
+                if (instruction.equals(this.instructions.getFirst())) {
+                    this.head = this.curBB;
+                }
+            } else {
+                this.curBB.addInstruction(instruction);
+            }
+        }
+    }
+
+    private void linkBBS() {
+
     }
 
 }

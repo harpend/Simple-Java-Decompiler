@@ -10,6 +10,7 @@ import java.util.Hashtable;
 import java.util.List;
 
 import jdk.jfr.Unsigned;
+import parser.cfg.ControlFlowGraph;
 
 public class ClassReader {
     private int magicNum;
@@ -28,6 +29,7 @@ public class ClassReader {
     public List<Dictionary<String, Object>> fields;
     public List<Dictionary<String, Object>> methods;
     public List<Dictionary<String, Object>> attributes;
+    public Dictionary<String, Object> curMethod;
 
     static final int CONSTANT_Class = 7;
     static final int CONSTANT_Fieldref = 9;
@@ -253,7 +255,7 @@ public class ClassReader {
 
         List<Dictionary<String, Object>> list = new ArrayList<Dictionary<String, Object>> (); 
         for (int i = 0; i < this.methodsCount; i++) {
-            Dictionary<String, Object> element = new Hashtable<>();
+            this.curMethod = new Hashtable<>();
 
             int flags = getShort();
             int nameIndex = getShort();
@@ -262,17 +264,17 @@ public class ClassReader {
             
             List<String> accessFlags = calcAccessFlags(flags);
 
-            element.put("access_flags", accessFlags);
-            element.put("name_index", nameIndex);
-            element.put("descriptor_index", descriptorIndex);
-            element.put("attributes_count", attributesCount);
+            curMethod.put("access_flags", accessFlags);
+            curMethod.put("name_index", nameIndex);
+            curMethod.put("descriptor_index", descriptorIndex);
+            curMethod.put("attributes_count", attributesCount);
 
             if (attributesCount != 0) {
                 List<Dictionary<String, Object>> attrList = parseAttr(attributesCount);
-                element.put("attributes", attrList);
+                curMethod.put("attributes", attrList);
             }
 
-            list.add(element);
+            list.add(curMethod);
         }
 
         this.methods = list;
@@ -457,6 +459,7 @@ public class ClassReader {
         Dictionary<String, Object> codeDict = new Hashtable<>();
 
         boolean wide = false;
+        ControlFlowGraph cfg = new ControlFlowGraph(curMethod);
 
         int maxStack = getShort();
         int maxLocals = getShort();
@@ -476,97 +479,97 @@ public class ClassReader {
             byte b = codeBytes[i];
             switch (b) {
             case (byte)0x00:
-                codeEl.add(new Instruction(pc, "nop", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "nop", 0, 0), false));
                 break;
             case (byte)0x01:
-                codeEl.add(new Instruction(pc, "aconst_null", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "aconst_null", 0, 0), false));
                 break;
             case (byte)0x02:
-                codeEl.add(new Instruction(pc, "iconst_m1", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iconst_m1", 0, 0), false));
                 break;
                 case (byte)0x03:
-                codeEl.add(new Instruction(pc, "iconst_0", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iconst_0", 0, 0), false));
                 break;
                 case (byte)0x04:
-                codeEl.add(new Instruction(pc, "iconst_1", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iconst_1", 0, 0), false));
                 break;
                 case (byte)0x05:
-                codeEl.add(new Instruction(pc, "iconst_2", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iconst_2", 0, 0), false));
                 break;
                 case (byte)0x06:
-                codeEl.add(new Instruction(pc, "iconst_3", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iconst_3", 0, 0), false));
                 break;
                 case (byte)0x07:
-                codeEl.add(new Instruction(pc, "iconst_4", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iconst_4", 0, 0), false));
                 break;
                 case (byte)0x08:
-                codeEl.add(new Instruction(pc, "iconst_5", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iconst_5", 0, 0), false));
                 break;
                 case (byte)0x09:
-                codeEl.add(new Instruction(pc, "lconst_0", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "lconst_0", 0, 0), false));
                 break;
                 case (byte)0x0A:
-                codeEl.add(new Instruction(pc, "lconst_1", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "lconst_1", 0, 0), false));
                 break;
                 case (byte)0x0D:
-                codeEl.add(new Instruction(pc, "fconst_2", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "fconst_2", 0, 0), false));
                 break;
                 case (byte)0x0E:
-                codeEl.add(new Instruction(pc, "dconst_0", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dconst_0", 0, 0), false));
                 break;
                 case (byte)0x0F:
-                codeEl.add(new Instruction(pc, "dconst_1", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dconst_1", 0, 0), false));
                 break;
                 case (byte)0x10:
                 b1[0] = codeBytes[++i];
-                codeEl.add(new Instruction(pc, "bipush", concatByteToInt(b1), 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "bipush", concatByteToInt(b1), 0), false));
                 pc++;
                 break;
                 case (byte)0x12:
                 b1[0] = codeBytes[++i];
-                codeEl.add(new Instruction(pc, "ldc", concatByteToInt(b1), 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "ldc", concatByteToInt(b1), 0), false));
                 pc++;
                 break;
                 case (byte)0x18:
                 b1[0] = codeBytes[++i];
-                codeEl.add(new Instruction(pc, "dload", concatByteToInt(b1), 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dload", concatByteToInt(b1), 0), false));
                 pc++;
                 break;
                 case (byte)0x1A:
-                codeEl.add(new Instruction(pc, "iload_0", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iload_0", 0, 0), false));
                 break;
                 case (byte)0x1B:
-                codeEl.add(new Instruction(pc, "iload_1", 1, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iload_1", 1, 0), false));
                 break;
                 case (byte)0x1D:
-                codeEl.add(new Instruction(pc, "iload_3", 3, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iload_3", 3, 0), false));
                 break;
                 case (byte)0x27:
-                codeEl.add(new Instruction(pc, "dload_1", 1, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dload_1", 1, 0), false));
                 break;
                 case (byte)0x2A:
-                codeEl.add(new Instruction(pc, "aload_0", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "aload_0", 0, 0), false));
                 break;
                 case (byte)0x3C:
-                codeEl.add(new Instruction(pc, "istore_1", 1, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "istore_1", 1, 0), false));
                 break;
                 case (byte)0x3E:
-                codeEl.add(new Instruction(pc, "istore_3", 3, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "istore_3", 3, 0), false));
                 break;
                 case (byte)0x48:
-                codeEl.add(new Instruction(pc, "dstore_1", 1, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dstore_1", 1, 0), false));
                 break;
                 case (byte)0x49:
-                codeEl.add(new Instruction(pc, "dstore_2", 2, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dstore_2", 2, 0), false));
                 break;
                 case (byte)0x63:
-                codeEl.add(new Instruction(pc, "dadd", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dadd", 0, 0), false));
                 break;
                 case (byte)0x68:
-                codeEl.add(new Instruction(pc, "imul", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "imul", 0, 0), false));
                 break;
                 case (byte)0x6C:
-                codeEl.add(new Instruction(pc, "idiv", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "idiv", 0, 0), false));
                 break;
                 case (byte)0x84:
                 if (wide) {
@@ -576,55 +579,55 @@ public class ClassReader {
                     b2[0] = codeBytes[++i];
                     b2[1] = codeBytes[++i];
                     b2int = concatSignedByteToInt(b2, 0x8000);
-                    codeEl.add(new Instruction(pc, "iinc", b1int, b2int));
+                    codeEl.add(cfg.addInstruction( new Instruction(pc, "iinc", b1int, b2int), false));
                     pc+=4;
                 } else {
                     b1[0] = codeBytes[++i];
                     b1int = concatByteToInt(b1);
                     b1[0] = codeBytes[++i];
                     b2int = concatSignedByteToInt(b1, 0x80);
-                    codeEl.add(new Instruction(pc, "iinc", b1int, b2int));
+                    codeEl.add(cfg.addInstruction( new Instruction(pc, "iinc", b1int, b2int), false));
                     pc++;pc++;
                 }
                 break;
                 case (byte)0x87:
-                codeEl.add(new Instruction(pc, "i2d", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "i2d", 0, 0), false));
                 break;
                 case (byte)0xA4:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
                 b2[1] += i;
-                codeEl.add(new Instruction(pc, "if_icmple", concatByteToInt(b2), 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "if_icmple", concatByteToInt(b2), 0), true));
                 pc++;pc++;
                 break;
                 case (byte)0xAF:
-                codeEl.add(new Instruction(pc, "dreturn", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dreturn", 0, 0), true));
                 break;
                 case (byte)0xB1:
-                codeEl.add(new Instruction(pc, "return", 0, 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "return", 0, 0), true));
                 break;    
                 case (byte)0xB2:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                codeEl.add(new Instruction(pc, "getstatic", concatByteToInt(b2), 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "getstatic", concatByteToInt(b2), 0), false));
                 pc++;pc++;
                 break;    
                 case (byte)0xB6:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                codeEl.add(new Instruction(pc, "invokevirtual", concatByteToInt(b2), 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "invokevirtual", concatByteToInt(b2), 0), true));
                 pc++;pc++;
                 break;    
                 case (byte)0xB7:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                codeEl.add(new Instruction(pc, "invokespecial", concatByteToInt(b2), 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "invokespecial", concatByteToInt(b2), 0), true));
                 pc++;pc++;
                 break;    
                 case (byte)0xB8:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                codeEl.add(new Instruction(pc, "invokestatic", concatByteToInt(b2), 0));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "invokestatic", concatByteToInt(b2), 0), true));
                 pc++;pc++;
                 break;    
             default:

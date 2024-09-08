@@ -1,6 +1,6 @@
 # SimpleJavaDecompiler
 
-(Somewhat inspired by Decompiling Java - Godfrey Nolan and JD-Core - Emmanuel Dupuy)
+(Somewhat inspired by Decompiling Java - Godfrey Nolan, JD-Core - Emmanuel Dupuy and The Dragon Book)
 
 ##
 

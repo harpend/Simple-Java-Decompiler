@@ -6,6 +6,7 @@ import parser.Instruction;
 
 public class BasicBlock {
     public Instruction leader;
+    public Instruction terminator;
     public List<Instruction> instructions;
     public List<BasicBlock> successors;
     public List<BasicBlock> predecessors;
@@ -19,5 +20,9 @@ public class BasicBlock {
 
     public void addInstruction(Instruction i) {
         this.instructions.add(i);
+    }
+
+    public void setTerminator() {
+        this.terminator = this.instructions.getLast();
     }
 }

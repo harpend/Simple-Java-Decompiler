@@ -25,6 +25,10 @@ public class ControlFlowGraph {
         this.method = method;
         this.instructions = new ArrayList<Instruction>();
         this.bbList = new ArrayList<BasicBlock>();
+        this.terminators = new HashSet<Integer>();
+        this.leaders = new HashSet<Integer>();
+        this.fall = new HashSet<Integer>();
+        this.i2bb = new HashMap<Integer, BasicBlock>();
     }
 
     public Instruction addInstruction(Instruction i, boolean cfChange) {
@@ -63,6 +67,7 @@ public class ControlFlowGraph {
                 }
 
                 this.curBB = new BasicBlock(instruction);
+                this.i2bb.put(instruction.line, this.curBB);
                 this.bbList.add(curBB);
                 if (instruction.equals(this.instructions.getFirst())) {
                     this.head = this.curBB;
@@ -89,14 +94,26 @@ public class ControlFlowGraph {
                     fallToNext = true;
                 }
 
-                // handle cases where it isnt a simple fall through
-                // create map of leaders to bb when initially creating bb
-                // access the bb and set the preds and the succs
+                if (t.type.equals("if_icmple")) {
+                    BasicBlock bbSwap = this.i2bb.get(t.index1);
+                    bb.successors.add(bbSwap);
+                    bbSwap.predecessors.add(bb);
+                }
             } else {
                 System.out.println("error with terminators");
                 System.exit(1);
             }
             this.prevBB = bb;
+        }
+    }
+
+    public void stringify() {
+        System.out.println("Insert method name:");
+        int i = 0;
+        for (BasicBlock bb : this.bbList) {
+            System.out.println("BB " + i + ":");
+            bb.stringify();
+            i++;
         }
     }
 

@@ -15,6 +15,7 @@ public class BasicBlock {
         this.leader = l;
         this.instructions = new ArrayList<Instruction>();
         this.successors = new ArrayList<BasicBlock>();
+        this.predecessors = new ArrayList<BasicBlock>();
         this.instructions.add(l);
     }
 
@@ -22,7 +23,22 @@ public class BasicBlock {
         this.instructions.add(i);
     }
 
-    public void setTerminator() {
-        this.terminator = this.instructions.getLast();
+    public void stringify() {
+        for (Instruction i : this.instructions) {
+            System.out.println("\t" + i.line + " " + i.type + " " + i.index1 + " " + i.index2);
+        }
+
+        System.out.println("Predecessors:");
+        for (BasicBlock bb : this.predecessors) {
+            System.out.print(bb.leader.line + " ");
+        }
+
+        System.out.println();
+        System.out.println("Successors:");
+        for (BasicBlock bb : this.successors) {
+            System.out.print(bb.leader.line + " ");
+        }
+
+        System.out.println();
     }
 }

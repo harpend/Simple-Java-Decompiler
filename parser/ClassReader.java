@@ -19,6 +19,7 @@ public class ClassReader {
     private int constantPoolCount;
     public int thisClass;
     public int methodsCount;
+    public int offset = 0;
     private int superClass;
     private int interfacesCount;
     private FileInputStream fis;
@@ -55,6 +56,7 @@ public class ClassReader {
             this.constantPoolCount = getShort();
 
             byte[] tag = new byte[1];
+            this.offset++;
             List<Dictionary<String, String>> list = new ArrayList<Dictionary<String, String>> (); 
             for (int i = 0; i<(constantPoolCount-1); i++){
                 Dictionary<String, String> element = new Hashtable<>();
@@ -130,6 +132,7 @@ public class ClassReader {
                         // u1 tag, u1 reference_kind, u2 reference_index
                         byte[] referenceKindBytes = new byte[1];
                         fis.read(referenceKindBytes);
+                        this.offset++;
                         String referenceKind = Byte.toString(ByteBuffer.wrap(referenceKindBytes).get());
                         String referenceIndex = Integer.toString(getShort());
                         element.put("tag", "CONSTANT_MethodHandle");
@@ -174,6 +177,7 @@ public class ClassReader {
                         int lengthShort = getShort();
                         byte[] bytesBytes3 = new byte[lengthShort];
                         fis.read(bytesBytes3);
+                        this.offset++;
                         String bytes3 = new String(bytesBytes3, StandardCharsets.UTF_8);
                         String length = String.valueOf(lengthShort);
                         element.put("tag", "CONSTANT_Utf8");
@@ -468,6 +472,7 @@ public class ClassReader {
         byte[] codeBytes = new byte[codeLength];
 
         fis.read(codeBytes);
+        this.offset+=codeLength;
 
         List<Instruction> codeEl = new ArrayList<Instruction>();
         byte[] b1 = new byte[1];
@@ -596,8 +601,8 @@ public class ClassReader {
                 case (byte)0xA4:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                b2[1] += i;
-                codeEl.add(cfg.addInstruction( new Instruction(pc, "if_icmple", concatByteToInt(b2), 0), true));
+                int offset2 = ((b2[0]) << 8) | (b2[1]);
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "if_icmple", offset2 +pc, 0), true));
                 pc++;pc++;
                 break;
                 case (byte)0xAF:
@@ -656,7 +661,8 @@ public class ClassReader {
         codeDict.put("max_locals", maxLocals);        
         codeDict.put("code", codeEl);        
         codeDict.put("attribute_info", attr);
-
+        cfg.generateCFG();
+        cfg.stringify();
         return codeDict;
     }
 
@@ -677,6 +683,7 @@ public class ClassReader {
         
         return value;
     }
+
 
     private int concatByteToInt(byte[] bytes) {
         int value = 0;
@@ -731,11 +738,13 @@ public class ClassReader {
     private int getByte() throws IOException {
         byte[] b = new byte[1];
         fis.read(b);
+        this.offset++;
         return b[0] & 0xFF;
     }
 
     private int getShort() throws IOException {
         byte[] b = new byte[2];
+        this.offset+=2;
         fis.read(b);
         return ByteBuffer.wrap(b).getShort();
     }
@@ -743,6 +752,7 @@ public class ClassReader {
     private int getInt() throws IOException {
         byte[] b = new byte[4];
         fis.read(b);
+        this.offset+=4;
         return ByteBuffer.wrap(b).getInt();
     }
 

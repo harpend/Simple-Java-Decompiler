@@ -8,14 +8,14 @@ public class BasicBlock {
     public Instruction leader;
     public Instruction terminator;
     public List<Instruction> instructions;
-    public List<BasicBlock> successors;
-    public List<BasicBlock> predecessors;
+    public List<Integer> successors;
+    public List<Integer> predecessors;
 
     public BasicBlock(Instruction l) {
         this.leader = l;
         this.instructions = new ArrayList<Instruction>();
-        this.successors = new ArrayList<BasicBlock>();
-        this.predecessors = new ArrayList<BasicBlock>();
+        this.successors = new ArrayList<Integer>();
+        this.predecessors = new ArrayList<Integer>();
         this.instructions.add(l);
     }
 
@@ -29,14 +29,14 @@ public class BasicBlock {
         }
 
         System.out.println("Predecessors:");
-        for (BasicBlock bb : this.predecessors) {
-            System.out.print(bb.leader.line + " ");
+        for (Integer i : this.predecessors) {
+            System.out.print(i + " ");
         }
 
         System.out.println();
         System.out.println("Successors:");
-        for (BasicBlock bb : this.successors) {
-            System.out.print(bb.leader.line + " ");
+        for (Integer i : this.successors) {
+            System.out.print(i + " ");
         }
 
         System.out.println();

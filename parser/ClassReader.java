@@ -657,12 +657,11 @@ public class ClassReader {
         if (attributesCount != 0) {
             attr = parseAttr(attributesCount);
         }
+        cfg.generateCFG();
         codeDict.put("max_stack", maxStack);        
         codeDict.put("max_locals", maxLocals);        
-        codeDict.put("code", codeEl);        
+        codeDict.put("code", cfg.getInstructions());        
         codeDict.put("attribute_info", attr);
-        cfg.generateCFG();
-        cfg.stringify();
         return codeDict;
     }
 

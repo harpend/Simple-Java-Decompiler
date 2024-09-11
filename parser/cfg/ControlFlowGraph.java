@@ -56,6 +56,7 @@ public class ControlFlowGraph {
     public void generateCFG() {
         generateBBS();
         linkBBS(); 
+        reduceCFG();
     }
 
     private void generateBBS() {
@@ -84,8 +85,8 @@ public class ControlFlowGraph {
         boolean fallToNext = false;
         for (BasicBlock bb : this.bbList) {
             if (fallToNext) {
-                bb.predecessors.add(this.prevBB);
-                this.prevBB.successors.add(bb);
+                bb.predecessors.add(this.prevBB.leader.line);
+                this.prevBB.successors.add(bb.leader.line);
             }
 
             Instruction t = bb.instructions.getLast();
@@ -96,8 +97,8 @@ public class ControlFlowGraph {
 
                 if (t.type.equals("if_icmple")) {
                     BasicBlock bbSwap = this.i2bb.get(t.index1);
-                    bb.successors.add(bbSwap);
-                    bbSwap.predecessors.add(bb);
+                    bb.successors.add(bbSwap.leader.line);
+                    bbSwap.predecessors.add(bb.leader.line);
                 }
             } else {
                 System.out.println("error with terminators");
@@ -105,6 +106,27 @@ public class ControlFlowGraph {
             }
             this.prevBB = bb;
         }
+    }
+
+    
+    private void reduceCFG() {
+        List<Instruction> newInstructions = new ArrayList<Instruction>();
+        for (BasicBlock bb : this.bbList) {
+            int leader = bb.leader.line;
+
+            // do while - may be able to tag bb upon creation/linking 
+            // instead to reduce need for checking
+            if (bb.successors.contains(leader) && bb.predecessors.contains(leader)) {
+                bb.instructions.addFirst(new Instruction(-1, "do", 0, 0));
+                bb.instructions.addLast(new Instruction(-1, "do_end", 0, 0));
+            }
+
+            for (Instruction i : bb.instructions) {
+                newInstructions.add(i);
+            }
+        }
+
+        this.instructions = newInstructions;
     }
 
     public void stringify() {
@@ -115,6 +137,10 @@ public class ControlFlowGraph {
             bb.stringify();
             i++;
         }
+    }
+
+    public List<Instruction> getInstructions() {
+        return this.instructions;
     }
 
 }

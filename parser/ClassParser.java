@@ -194,8 +194,14 @@ public class ClassParser {
                 case "dadd":
                     oStack.push(oStack.pop().toString() + " + " + oStack.pop().toString());
                     break;
-                case "if_cmple":
-                    parseIfCmp(i, sub);
+                case "if_icmple":
+                    parseIfICmp(i, sub);
+                    break;
+                case "do":
+                    sub.finalStack.push("do {");
+                    break;
+                case "do_end":
+                    sub.finalStack.push("} while(" + oStack.pop().toString() + ");");
                     break;
                 default:
                     System.out.println("type not implemented: " + i.type);
@@ -203,8 +209,12 @@ public class ClassParser {
             }
         }
 
-        private void parseIfCmp(Instruction i, Subroutine sub) {
-
+        private void parseIfICmp(Instruction i, Subroutine sub) {
+            String item1 = oStack.pop().toString();
+            String item2 = oStack.pop().toString();
+            if (i.type.equals("if_icmple")) {
+                oStack.push(item1 + " <= " + item2);
+            }
         }
         
         private void parseInvoke(Instruction i, Subroutine sub) {

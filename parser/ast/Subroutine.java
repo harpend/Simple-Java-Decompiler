@@ -44,7 +44,15 @@ public class Subroutine extends astNode {
             outputStack.push(finalStack.pop());
         }
         while(!outputStack.isEmpty()) {
-            s.append(statIndent).append(outputStack.pop()).append("\n");
+            String temp = outputStack.pop().toString(); 
+            if (temp.contains("}")) {
+                statIndent = statIndent.substring(0, statIndent.length() - 1);
+            } 
+            
+            s.append(statIndent).append(temp).append("\n");
+            if (temp.contains("{")) {
+                statIndent = statIndent + "\t";
+            }
         }
 
         s.append(indent).append("}");

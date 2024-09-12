@@ -636,7 +636,7 @@ public class ClassReader {
                 pc++;pc++;
                 break;    
             default:
-                System.out.println("Bytecode type not implemented yet");
+                System.out.println("Bytecode type not implemented yet, also make sure to add to cfg");
                 String hexString = String.format("%02X", b);
                 System.out.println(hexString);
                 System.exit(1);
@@ -658,6 +658,7 @@ public class ClassReader {
             attr = parseAttr(attributesCount);
         }
         cfg.generateCFG();
+        cfg.stringify();
         codeDict.put("max_stack", maxStack);        
         codeDict.put("max_locals", maxLocals);        
         codeDict.put("code", cfg.getInstructions());        

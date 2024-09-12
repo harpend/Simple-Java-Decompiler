@@ -1,21 +1,25 @@
 package parser.cfg;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import parser.Instruction;
 
 public class BasicBlock {
     public Instruction leader;
     public Instruction terminator;
+    public boolean visited;
+    public int id;
     public List<Instruction> instructions;
-    public List<Integer> successors;
-    public List<Integer> predecessors;
+    public List<BasicBlock> successors;
+    public List<BasicBlock> predecessors;
+    public BitSet dominators;
 
     public BasicBlock(Instruction l) {
         this.leader = l;
         this.instructions = new ArrayList<Instruction>();
-        this.successors = new ArrayList<Integer>();
-        this.predecessors = new ArrayList<Integer>();
+        this.successors = new ArrayList<BasicBlock>();
+        this.predecessors = new ArrayList<BasicBlock>();
         this.instructions.add(l);
     }
 
@@ -29,14 +33,14 @@ public class BasicBlock {
         }
 
         System.out.println("Predecessors:");
-        for (Integer i : this.predecessors) {
-            System.out.print(i + " ");
+        for (BasicBlock i : this.predecessors) {
+            System.out.print(i.leader.line + " ");
         }
 
         System.out.println();
         System.out.println("Successors:");
-        for (Integer i : this.successors) {
-            System.out.print(i + " ");
+        for (BasicBlock i : this.successors) {
+            System.out.print(i.leader.line + " ");
         }
 
         System.out.println();

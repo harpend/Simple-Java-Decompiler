@@ -1,6 +1,7 @@
 package parser.cfg;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,6 +18,7 @@ public class ControlFlowGraph {
     private HashSet<Integer> fall;
     private boolean fallThrough = false;
     private BasicBlock head = null;
+    private BasicBlock fakeEnd = null;
     private BasicBlock curBB = null;
     private Instruction prevInstruction = null;
     private BasicBlock prevBB = null;
@@ -55,6 +57,7 @@ public class ControlFlowGraph {
 
     public void generateCFG() {
         generateBBS();
+        this.head = this.bbList.getFirst();
         linkBBS(); 
         reduceCFG();
     }
@@ -83,10 +86,11 @@ public class ControlFlowGraph {
 
     private void linkBBS() {
         boolean fallToNext = false;
+        this.fakeEnd = new BasicBlock(new Instruction(-1, null, 0, 0));
         for (BasicBlock bb : this.bbList) {
             if (fallToNext) {
-                bb.predecessors.add(this.prevBB.leader.line);
-                this.prevBB.successors.add(bb.leader.line);
+                bb.predecessors.add(this.prevBB);
+                this.prevBB.successors.add(bb);
             }
 
             Instruction t = bb.instructions.getLast();
@@ -97,8 +101,11 @@ public class ControlFlowGraph {
 
                 if (t.type.equals("if_icmple")) {
                     BasicBlock bbSwap = this.i2bb.get(t.index1);
-                    bb.successors.add(bbSwap.leader.line);
-                    bbSwap.predecessors.add(bb.leader.line);
+                    bb.successors.add(bbSwap);
+                    bbSwap.predecessors.add(bb);
+                } else if (t.type.contains("return")) {
+                    // bb.successors.add(this.fakeEnd.leader.line); i dont think this line is needed?
+                    this.fakeEnd.predecessors.add(bb);
                 }
             } else {
                 System.out.println("error with terminators");
@@ -127,6 +134,52 @@ public class ControlFlowGraph {
         }
 
         this.instructions = newInstructions;
+    }
+
+    private void forwardVisit(BasicBlock bb) {
+        bb.visited = true;
+        // pre visit
+        for (BasicBlock basicBlock : bb.successors) {
+            if (!basicBlock.visited) {
+                forwardVisit(bb);
+            }
+        }
+
+        // post visit
+
+    }
+
+    private void computeDominators() {
+        // bitset has a higher overhead so bitvectors could be used to improve this
+        boolean changed = false;
+        int i = 0;
+        for (BasicBlock bb : this.bbList) {
+            bb.id = i++;
+            bb.dominators = new BitSet(bbList.size());
+            bb.dominators.set(0, bbList.size(), true);
+        }
+
+        this.head.dominators.set(0, bbList.size(), false);
+        this.head.dominators.set(this.head.id);
+        BitSet T = new BitSet(bbList.size());
+        do { 
+            changed = false;
+            for (BasicBlock bb : this.bbList) {
+                if (bb.equals(this.head)) {
+                    continue;
+                }
+
+                for (BasicBlock basicBlock : bb.predecessors) {
+                    T.set(0, bbList.size(), false);
+                    T.or(bb.dominators);
+                    bb.dominators.and(basicBlock.dominators);
+                    bb.dominators.set(bb.id);
+                    if (!bb.dominators.equals(T)) {
+                        changed = true;
+                    }
+                }
+            }
+        } while (changed);
     }
 
     public void stringify() {

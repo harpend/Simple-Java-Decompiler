@@ -213,7 +213,7 @@ public class ClassParser {
             String item1 = oStack.pop().toString();
             String item2 = oStack.pop().toString();
             if (i.type.equals("if_icmple")) {
-                oStack.push(item1 + " <= " + item2);
+                oStack.push(item2 + " <= " + item1);
             }
         }
         

@@ -60,6 +60,7 @@ public class ControlFlowGraph {
         this.head = this.bbList.getFirst();
         linkBBS(); 
         computeDominators();
+        findLoops();
     }
 
     private void generateBBS() {
@@ -150,8 +151,6 @@ public class ControlFlowGraph {
     }
 
     private void computeDominators() {
-        // Need postorder of the vertices
-        // intialise the dominators using a bitset
         int i = 0;
         for (BasicBlock bb : this.bbList) {
             bb.id = i++;
@@ -186,6 +185,21 @@ public class ControlFlowGraph {
         for (BasicBlock bb : this.bbList) {
             System.out.println(bb.dominators);
         }
+    }
+
+    private void findLoops() {
+        for (BasicBlock bb : this.bbList) {
+            for (BasicBlock succ : bb.successors) {
+                if (bb.dominators.get(succ.id)) {
+                    // there is a loop
+                    System.out.println("there is a loop");
+                }
+            }
+        }
+    }
+
+    private void computeLoop() {
+
     }
 
     public void stringify() {

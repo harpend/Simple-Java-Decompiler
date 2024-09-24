@@ -2,7 +2,7 @@
 
 Current status: in development.
 
-(Somewhat inspired by Decompiling Java - Godfrey Nolan, JD-Core - Emmanuel Dupuy and Backer Street - Giampiero Caprino)
+(Inspired by Decompiling Java - Godfrey Nolan (tests and stack tracking), JD-Core - Emmanuel Dupuy (control flow), and Backer Street - Giampiero Caprino (control flow))
 
 ##
 

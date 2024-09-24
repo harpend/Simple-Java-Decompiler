@@ -59,7 +59,7 @@ public class ControlFlowGraph {
         generateBBS();
         this.head = this.bbList.getFirst();
         linkBBS(); 
-        reduceCFG();
+        computeDominators();
     }
 
     private void generateBBS() {
@@ -116,25 +116,25 @@ public class ControlFlowGraph {
     }
 
     
-    private void reduceCFG() {
-        List<Instruction> newInstructions = new ArrayList<Instruction>();
-        for (BasicBlock bb : this.bbList) {
-            int leader = bb.leader.line;
+    // private void reduceCFG() {
+    //     List<Instruction> newInstructions = new ArrayList<Instruction>();
+    //     for (BasicBlock bb : this.bbList) {
+    //         int leader = bb.leader.line;
 
-            // do while - may be able to tag bb upon creation/linking 
-            // instead to reduce need for checking
-            if (bb.successors.contains(leader) && bb.predecessors.contains(leader)) {
-                bb.instructions.addFirst(new Instruction(-1, "do", 0, 0));
-                bb.instructions.addLast(new Instruction(-1, "do_end", 0, 0));
-            }
+    //         // do while - may be able to tag bb upon creation/linking 
+    //         // instead to reduce need for checking
+    //         if (bb.successors.contains(leader) && bb.predecessors.contains(leader)) {
+    //             bb.instructions.addFirst(new Instruction(-1, "do", 0, 0));
+    //             bb.instructions.addLast(new Instruction(-1, "do_end", 0, 0));
+    //         }
 
-            for (Instruction i : bb.instructions) {
-                newInstructions.add(i);
-            }
-        }
+    //         for (Instruction i : bb.instructions) {
+    //             newInstructions.add(i);
+    //         }
+    //     }
 
-        this.instructions = newInstructions;
-    }
+    //     this.instructions = newInstructions;
+    // }
 
     private void forwardVisit(BasicBlock bb) {
         bb.visited = true;
@@ -150,18 +150,18 @@ public class ControlFlowGraph {
     }
 
     private void computeDominators() {
-        // bitset has a higher overhead so bitvectors could be used to improve this
-        boolean changed = false;
+        // Need postorder of the vertices
+        // intialise the dominators using a bitset
         int i = 0;
         for (BasicBlock bb : this.bbList) {
             bb.id = i++;
-            bb.dominators = new BitSet(bbList.size());
-            bb.dominators.set(0, bbList.size(), true);
+            bb.dominators = new BitSet(this.bbList.size());
+            bb.dominators.set(0, this.bbList.size());
         }
 
-        this.head.dominators.set(0, bbList.size(), false);
-        this.head.dominators.set(this.head.id);
-        BitSet T = new BitSet(bbList.size());
+        this.head.dominators.set(1, this.bbList.size(), false);
+
+        boolean changed = false;
         do { 
             changed = false;
             for (BasicBlock bb : this.bbList) {
@@ -169,17 +169,23 @@ public class ControlFlowGraph {
                     continue;
                 }
 
-                for (BasicBlock basicBlock : bb.predecessors) {
-                    T.set(0, bbList.size(), false);
-                    T.or(bb.dominators);
-                    bb.dominators.and(basicBlock.dominators);
-                    bb.dominators.set(bb.id);
-                    if (!bb.dominators.equals(T)) {
-                        changed = true;
-                    }
+                BitSet hold = new BitSet(this.bbList.size());
+                hold.set(0, this.bbList.size());
+                for (BasicBlock pred : bb.predecessors) {
+                    hold.and(pred.dominators);
+                }
+
+                hold.set(bb.id);
+                if (!hold.equals(bb.dominators)) {
+                    changed = true;
+                    bb.dominators = hold;
                 }
             }
         } while (changed);
+
+        for (BasicBlock bb : this.bbList) {
+            System.out.println(bb.dominators);
+        }
     }
 
     public void stringify() {

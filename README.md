@@ -2,7 +2,7 @@
 
 Current status: in development.
 
-(Somewhat inspired by Decompiling Java - Godfrey Nolan, JD-Core - Emmanuel Dupuy and The Dragon Book)
+(Somewhat inspired by Decompiling Java - Godfrey Nolan, JD-Core - Emmanuel Dupuy and Backer Street - Giampiero Caprino)
 
 ##
 

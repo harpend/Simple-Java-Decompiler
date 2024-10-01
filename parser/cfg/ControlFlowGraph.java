@@ -6,6 +6,8 @@ import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Stack;
+
 import parser.Instruction;
 
 public class ControlFlowGraph {
@@ -22,6 +24,7 @@ public class ControlFlowGraph {
     private BasicBlock curBB = null;
     private Instruction prevInstruction = null;
     private BasicBlock prevBB = null;
+    private List<List<BasicBlock>> loopList;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -188,18 +191,41 @@ public class ControlFlowGraph {
     }
 
     private void findLoops() {
+        this.loopList = new ArrayList<List<BasicBlock>>();
         for (BasicBlock bb : this.bbList) {
+            if (bb.equals(this.head)) {
+                continue;
+            }
+
             for (BasicBlock succ : bb.successors) {
                 if (bb.dominators.get(succ.id)) {
-                    // there is a loop
-                    System.out.println("there is a loop");
+                    this.loopList.add(computeLoop(succ, bb));
                 }
             }
         }
     }
 
-    private void computeLoop() {
+    private List<BasicBlock> computeLoop(BasicBlock succ, BasicBlock bb) {
+        List<BasicBlock> loop = new ArrayList<BasicBlock>();
+        loop.add(bb);
+        Stack<BasicBlock> workList = new Stack<BasicBlock>();
+        BasicBlock block;
+        if (succ != bb) {
+            workList.add(succ);
+            loop.add(succ);
+        }
+        
+        while (!workList.empty()) {
+            block = workList.pop();
+            for (BasicBlock basicBlock : block.predecessors) {
+                if (!loop.contains(basicBlock)) {
+                    loop.add(basicBlock);
+                    workList.add(basicBlock);
+                }
+            }
+        }
 
+        return loop;
     }
 
     public void stringify() {
@@ -209,6 +235,14 @@ public class ControlFlowGraph {
             System.out.println("BB " + i + ":");
             bb.stringify();
             i++;
+        }
+
+        for (List<BasicBlock> bbLoopList : this.loopList) {
+            System.out.println("Loop");
+            for (BasicBlock bb : bbLoopList) {
+                System.out.println("\t" + bb.id);
+            }
+            System.out.println("Loop End");
         }
     }
 

@@ -64,6 +64,7 @@ public class ControlFlowGraph {
         linkBBS(); 
         computeDominators();
         findLoops();
+        introduceLoops();
     }
 
     private void generateBBS() {
@@ -117,40 +118,6 @@ public class ControlFlowGraph {
             }
             this.prevBB = bb;
         }
-    }
-
-    
-    // private void reduceCFG() {
-    //     List<Instruction> newInstructions = new ArrayList<Instruction>();
-    //     for (BasicBlock bb : this.bbList) {
-    //         int leader = bb.leader.line;
-
-    //         // do while - may be able to tag bb upon creation/linking 
-    //         // instead to reduce need for checking
-    //         if (bb.successors.contains(leader) && bb.predecessors.contains(leader)) {
-    //             bb.instructions.addFirst(new Instruction(-1, "do", 0, 0));
-    //             bb.instructions.addLast(new Instruction(-1, "do_end", 0, 0));
-    //         }
-
-    //         for (Instruction i : bb.instructions) {
-    //             newInstructions.add(i);
-    //         }
-    //     }
-
-    //     this.instructions = newInstructions;
-    // }
-
-    private void forwardVisit(BasicBlock bb) {
-        bb.visited = true;
-        // pre visit
-        for (BasicBlock basicBlock : bb.successors) {
-            if (!basicBlock.visited) {
-                forwardVisit(bb);
-            }
-        }
-
-        // post visit
-
     }
 
     private void computeDominators() {
@@ -214,7 +181,7 @@ public class ControlFlowGraph {
             workList.add(succ);
             loop.add(succ);
         }
-        
+
         while (!workList.empty()) {
             block = workList.pop();
             for (BasicBlock basicBlock : block.predecessors) {
@@ -226,6 +193,18 @@ public class ControlFlowGraph {
         }
 
         return loop;
+    }
+
+    private void introduceLoops() {
+        // only supports do while and un nested loops
+        for (List<BasicBlock> loop : this.loopList) {
+            loop.getFirst().instructions.addFirst(new Instruction(0, "do", 0, 0));
+            loop.getLast().instructions.addLast(new Instruction(0, "do_end", 0, 0));
+        }
+    }
+
+    private void sortLoops() {
+        // sort the loops from the inner most to the outermost
     }
 
     public void stringify() {
@@ -247,7 +226,13 @@ public class ControlFlowGraph {
     }
 
     public List<Instruction> getInstructions() {
-        return this.instructions;
+        List<Instruction> newInstructions = new ArrayList<Instruction>();
+        for (BasicBlock bb : this.bbList) {
+            for (Instruction i : bb.instructions) {
+                newInstructions.add(i);
+            }
+        }
+        return newInstructions;
     }
 
 }

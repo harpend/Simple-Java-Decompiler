@@ -197,6 +197,11 @@ public class ControlFlowGraph {
 
     private void introduceLoops() {
         // only supports do while and un nested loops
+        // also make loop a specific class and add functions to it
+        // add compare function to determine if one loop is deeper than the other
+        // maybe by doing a function that calculates the number of elements in a loop
+        // and add 1 to all the loops that contain that basic block and are smaller in the number of basic blocks they contain
+        
         for (List<BasicBlock> loop : this.loopList) {
             loop.getFirst().instructions.addFirst(new Instruction(0, "do", 0, 0));
             loop.getLast().instructions.addLast(new Instruction(0, "do_end", 0, 0));

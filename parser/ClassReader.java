@@ -54,7 +54,6 @@ public class ClassReader {
             this.minorVer = getShort();
             this.majorVer = getShort();
             this.constantPoolCount = getShort();
-
             byte[] tag = new byte[1];
             this.offset++;
             List<Dictionary<String, String>> list = new ArrayList<Dictionary<String, String>> (); 
@@ -67,7 +66,9 @@ public class ClassReader {
                         String nameIndex = Integer.toString(getShort());
                         element.put("tag", "CONSTANT_Class");
                         element.put("name_index", nameIndex);
-                        list.add(element);               
+                        list.add(element); 
+                        System.out.print(i+1);
+                        System.out.println(element);              
                         break;
                     case CONSTANT_Fieldref:
                         // u1 tag, u2 class_index, u2 name_amd_type_index
@@ -77,6 +78,8 @@ public class ClassReader {
                         element.put("class_index", classIndex);
                         element.put("name_and_type_index", nameAndTypeIndex);
                         list.add(element);
+                        System.out.print(i+1);
+                        System.out.println(element);
                         break;
                     case CONSTANT_Double:
                         // u1 tag, u4 high_bytes, u4 low_bytes
@@ -86,13 +89,18 @@ public class ClassReader {
                         element.put("high_bytes", highBytes);
                         element.put("low_bytes", lowBytes);
                         list.add(element);
+                        System.out.print(i+1);
+                        System.out.println(element);
+                        i++;
                         break;
                     case CONSTANT_Float:
                         // u1 tag, u4 bytes
                         String bytes2 = Integer.toString(getInt());
                         element.put("tag", "CONSTANT_Float");
                         element.put("bytes", bytes2);
-                        list.add(element);                    
+                        list.add(element);
+                        System.out.print(i+1);
+                        System.out.println(element);                    
                         break;
                     case CONSTANT_Integer:
                         // u1 tag, u4 bytes
@@ -100,6 +108,8 @@ public class ClassReader {
                         element.put("tag", "CONSTANT_Integer");
                         element.put("bytes", bytes);
                         list.add(element);
+                        System.out.print(i+1);
+                        System.out.println(element);
                         break;
                     case CONSTANT_InterfaceMethodref:
                         // u1 tag, u2 class_index, u2 name_amd_type_index
@@ -109,6 +119,8 @@ public class ClassReader {
                         element.put("class_index", classIndex3);
                         element.put("name_and_type_index", nameAndTypeIndex3);
                         list.add(element);  
+                        System.out.print(i+1);
+                        System.out.println(element);
                         break;
                     case CONSTANT_InvokeDynamic:
                         // u1 tag, u2 bootstrap_method_attr_index, u2 name_and_type_index
@@ -118,6 +130,8 @@ public class ClassReader {
                         element.put("bootstrap_method_attr_index", bootstrapMethodAttrIndex);
                         element.put("name_and_type_index", nameAndTypeIndex4);
                         list.add(element);
+                        System.out.print(i+1);
+                        System.out.println(element);
                         break;
                     case CONSTANT_Long:
                         // u1 tag, u4 high_bytes, u4 low_bytes
@@ -126,7 +140,10 @@ public class ClassReader {
                         element.put("tag", "CONSTANT_Long");
                         element.put("high_bytes", highBytes2);
                         element.put("low_bytes", lowBytes2);
-                        list.add(element);                    
+                        list.add(element); 
+                        System.out.print(i+1);
+                        System.out.println(element);
+                        i++;                   
                         break;
                     case CONSTANT_MethodHandle:
                         // u1 tag, u1 reference_kind, u2 reference_index
@@ -139,6 +156,8 @@ public class ClassReader {
                         element.put("referenceKind", referenceKind);
                         element.put("reference_index", referenceIndex);
                         list.add(element);
+                        System.out.print(i+1);
+                        System.out.println(element);
                         break;
                     case CONSTANT_MethodType:
                         // u1 tag, u2 descriptor_index
@@ -146,6 +165,8 @@ public class ClassReader {
                         element.put("tag", "CONSTANT_MethodType");
                         element.put("descriptor_index", descriptorIndex2);
                         list.add(element);
+                        System.out.print(i+1);
+                        System.out.println(element);
                         break;
                     case CONSTANT_Methodref:
                         // u1 tag, u2 class_index, u2 name_amd_type_index
@@ -154,7 +175,9 @@ public class ClassReader {
                         element.put("tag", "CONSTANT_Methodref");
                         element.put("class_index", classIndex2);
                         element.put("name_and_type_index", nameAndTypeIndex2);
-                        list.add(element);                    
+                        list.add(element);    
+                        System.out.print(i+1);
+                        System.out.println(element);                
                         break;
                     case CONSTANT_NameAndType:
                         // u1 tag, u2 name_index, u2 descriptor_index
@@ -163,7 +186,9 @@ public class ClassReader {
                         element.put("tag", "CONSTANT_NameAndType");
                         element.put("name_index", nameIndex2);
                         element.put("descriptor_index", descriptorIndex);
-                        list.add(element);                     
+                        list.add(element);
+                        System.out.print(i+1);
+                        System.out.println(element);                     
                         break;
                     case CONSTANT_String:
                         // u1 tag, u2 string_index
@@ -171,6 +196,8 @@ public class ClassReader {
                         element.put("tag", "CONSTANT_String");
                         element.put("string_index", stringIndex);
                         list.add(element);
+                        System.out.print(i+1);
+                        System.out.println(element);
                         break;
                     case CONSTANT_Utf8:
                         // u1 tag, u2 length, u1 bytes[length]
@@ -184,14 +211,15 @@ public class ClassReader {
                         element.put("length", length);
                         element.put("bytes", bytes3);
                         list.add(element);
+                        System.out.print(i+1);
+                        System.out.println(element);
                         break;
                     default:
                         System.out.println("Undefined CP type");
+                        System.out.println(tag[0]);
+                        System.exit(1);
                         break;
                 }
-                System.out.print(i+1);
-                System.out.println(element);
-
             }
             this.constantPool = list;
 

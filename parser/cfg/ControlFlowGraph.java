@@ -13,8 +13,8 @@ import parser.Instruction;
 public class ControlFlowGraph {
     private Dictionary<String, Object> method;
     private List<Instruction> instructions;
-    private List<BasicBlock> bbList;
-    private HashMap<Integer, BasicBlock> i2bb;
+    public List<BasicBlock> bbList;
+    public HashMap<Integer, BasicBlock> i2bb;
     private HashSet<Integer> terminators;
     private HashSet<Integer> leaders;
     private HashSet<Integer> fall;

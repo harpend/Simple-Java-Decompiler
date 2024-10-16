@@ -65,21 +65,18 @@ public class Intervals {
 
         while (!workList.isEmpty()) {
             int h = workList.poll(); 
-            if (visited.contains(h)) {
-                continue; 
-            }
 
             Set<Integer> interval = createInterval(h);
 
             intervals.add(interval);  
             visited.addAll(interval);
 
-            // a node is added to the worklist if its not already "visited", and all its immediate predecessors are in the previously calculated interval
+            // a node is added to the worklist if its not already "visited", and at least one of its immediate predecessors are in the previously calculated interval
             for (Integer node : preds.keySet()) {
                 if (visited.contains(node)) {
                     continue;
                 }
-                
+
                 if (!interval.contains(node)) {
                     for (int predNode : preds.get(node)) {
                         if (interval.contains(predNode)) {

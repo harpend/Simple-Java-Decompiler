@@ -74,6 +74,7 @@ public class Intervals {
             intervals.add(interval);  
             visited.addAll(interval);
 
+            // a node is added to the worklist if its not already "visited", and all its immediate predecessors are in the previously calculated interval
             for (Integer node : preds.keySet()) {
                 if (!interval.contains(node)) {
                     for (int predNode : preds.get(node)) {
@@ -98,6 +99,7 @@ public class Intervals {
         while (!queue.isEmpty()) {
             int current = queue.poll();
 
+            // a node is part of an interval if all predecessors are already in the interval, or it has no predecessors
             for (int succ : succs.get(current)) {
                 if (!interval.contains(succ)) {
                     List<Integer> predsOfSucc = preds.get(succ);

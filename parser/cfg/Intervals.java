@@ -21,7 +21,8 @@ public class Intervals {
         this.cfg = cfg;
     }
 
-    public List<Set<BasicBlock>> findIntervals(int n0) {
+    // for testing
+    public List<Set<BasicBlock>> findIntervalsBB(int n0) {
         List<Set<BasicBlock>> intervals = new ArrayList<>();
         Queue<Integer> workList = new LinkedList<>();
         workList.add(n0);
@@ -37,12 +38,43 @@ public class Intervals {
             for (Integer i : interval) {
                 bbInterval.add(cfg.i2bb.get(i));
             }
-            
+
             intervals.add(bbInterval);  
             visited.addAll(interval);
 
             for (BasicBlock bb : cfg.bbList) {
                 int node = bb.id;
+                if (!interval.contains(node)) {
+                    for (int predNode : preds.get(node)) {
+                        if (interval.contains(predNode)) {
+                            workList.add(node);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return intervals;
+    }
+
+    public List<Set<Integer>> findIntervals(int n0) {
+        List<Set<Integer>> intervals = new ArrayList<>();
+        Queue<Integer> workList = new LinkedList<>();
+        workList.add(n0);
+
+        while (!workList.isEmpty()) {
+            int h = workList.poll(); 
+            if (visited.contains(h)) {
+                continue; 
+            }
+
+            Set<Integer> interval = createInterval(h);
+
+            intervals.add(interval);  
+            visited.addAll(interval);
+
+            for (Integer node : preds.keySet()) {
                 if (!interval.contains(node)) {
                     for (int predNode : preds.get(node)) {
                         if (interval.contains(predNode)) {

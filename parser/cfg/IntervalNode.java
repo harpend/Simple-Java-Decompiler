@@ -6,16 +6,15 @@ import java.util.Set;
 public class IntervalNode {
     Set<Integer> succs;
     Set<Integer> preds;
-    Set<Integer> bbIds;
+    Set<Integer> IDs;
+    Integer ID;
+    Integer head;
     
-    public IntervalNode(Set<Integer> bbIDs) {
+    public IntervalNode(Integer head, Integer ID) {
         this.succs = new HashSet<Integer>();
         this.preds = new HashSet<Integer>();
-        this.bbIds = bbIDs;
-    }
-
-    public void LinkIntervalNode(Set<Integer> succs, Set<Integer> preds) {
-        this.succs = succs;
-        this.preds = preds;
+        this.IDs = new HashSet<Integer>();
+        this.ID = ID;
+        this.head = head;
     }
 }

@@ -137,7 +137,7 @@ public class ControlFlowGraph {
             }
         }
 
-        this.dfsStack.add(bb);
+        this.dfsStack.push(bb);
     }
 
     private void postOrderLabeling() {

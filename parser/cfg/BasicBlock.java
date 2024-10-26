@@ -11,10 +11,10 @@ public class BasicBlock {
     public Instruction leader;
     public Instruction terminator;
     public boolean visited;
-    public int id;
+    public int id; // reverse postorder numbering
     public List<Instruction> instructions;
-    public Set<Integer> successors;
-    public Set<Integer> predecessors;
+    public Set<BasicBlock> successors;
+    public Set<BasicBlock> predecessors;
     public BitSet dominators;
 
     public BasicBlock(Instruction l) {

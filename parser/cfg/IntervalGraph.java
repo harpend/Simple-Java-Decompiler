@@ -19,7 +19,7 @@ public class IntervalGraph {
         this.formerSuccs = successors;
         this.formerPreds = predecessors;
         this.visited = new HashSet<>();
-        this.int2node = new HashMap<Integer,IntervalNode>();
+        this.int2node = new HashMap<>();
     }
 
     public List<IntervalNode> FindIntervals(int n0) {
@@ -112,8 +112,8 @@ public class IntervalGraph {
         for (BasicBlock bb : cfg.bbList) {
             IntervalNode n = new IntervalNode(bb.id, bb.id);
             n.IDs.add(bb.id);
-            n.preds.addAll(bb.predecessors);
-            n.succs.addAll(bb.successors);
+            n.preds.addAll(bb.predecessors.GetIdList());
+            n.succs.addAll(bb.successors.GetIdList());
             nodeList.add(n);
         }
 

@@ -15,6 +15,7 @@ public class ControlFlowGraph {
     private Dictionary<String, Object> method;
     private List<Instruction> instructions;
     public List<BasicBlock> bbList;
+    public List<BasicBlock> bbListPostorder;
     public HashMap<Integer, BasicBlock> i2bb;
     private HashSet<Integer> terminators;
     private HashSet<Integer> leaders;
@@ -27,6 +28,8 @@ public class ControlFlowGraph {
     private BasicBlock prevBB = null;
     private List<List<BasicBlock>> loopList;
     private Map<Integer, BitSet> dominaterMap;
+    private Stack<BasicBlock> dfsStack;
+    private HashSet<BasicBlock> visited;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -64,6 +67,11 @@ public class ControlFlowGraph {
         generateBBS();
         this.head = this.bbList.getFirst();
         linkBBS(); 
+        this.visited = new HashSet<>(this.bbList.size());
+        this.dfsStack = new Stack<>();
+        this.bbListPostorder = new ArrayList<>();
+        depthFirstSearch(this.head);
+        postOrderLabeling();
         computeDominators();
         findLoops();
         introduceLoops();
@@ -96,8 +104,8 @@ public class ControlFlowGraph {
         this.fakeEnd = new BasicBlock(new Instruction(-1, null, 0, 0));
         for (BasicBlock bb : this.bbList) {
             if (fallToNext) {
-                bb.predecessors.add(this.prevBB.id);
-                this.prevBB.successors.add(bb.id);
+                bb.predecessors.add(this.prevBB);
+                this.prevBB.successors.add(bb);
             }
 
             Instruction t = bb.instructions.getLast();
@@ -108,17 +116,36 @@ public class ControlFlowGraph {
 
                 if (t.type.equals("if_icmple")) {
                     BasicBlock bbSwap = this.i2bb.get(t.index1);
-                    bb.successors.add(bbSwap.id);
-                    bbSwap.predecessors.add(bb.id);
+                    bb.successors.add(bbSwap);
+                    bbSwap.predecessors.add(bb);
                 } else if (t.type.contains("return")) {
                     // bb.successors.add(this.fakeEnd.leader.line); i dont think this line is needed?
-                    this.fakeEnd.predecessors.add(bb.id);
+                    this.fakeEnd.predecessors.add(bb);
                 }
             } else {
                 System.out.println("error with terminators");
                 System.exit(1);
             }
             this.prevBB = bb;
+        }
+    }
+
+    private void depthFirstSearch(BasicBlock bb) {
+        for (BasicBlock succ : bb.successors) {
+            if (!this.visited.contains(succ)) {
+                depthFirstSearch(succ);
+            }
+        }
+
+        this.dfsStack.add(bb);
+    }
+
+    private void postOrderLabeling() {
+        int i = 1;
+        while (!this.dfsStack.isEmpty()) {
+            BasicBlock bb = this.dfsStack.pop();
+            bb.id = i;
+            this.bbListPostorder.add(bb);
         }
     }
 

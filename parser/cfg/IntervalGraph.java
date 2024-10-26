@@ -99,7 +99,7 @@ public class IntervalGraph {
 
                 IntervalNode pred = int2node.get(i);
                 pred.succs.add(n.ID);
-                n.preds.add(i);
+                n.preds.add(pred.ID);
             }
         }
     }

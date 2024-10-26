@@ -5,34 +5,34 @@ import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import parser.Instruction;
 
-public class BasicBlock {
-    public Instruction leader;
-    public Instruction terminator;
+
+public class BasicBlock2 {
+    public Integer leader;
+    public Integer terminator;
     public boolean visited;
     public int id;
-    public List<Instruction> instructions;
-    public Set<Integer> successors;
-    public Set<Integer> predecessors;
+    public List<Integer> instructions;
+    public Set<BasicBlock> successors;
+    public Set<BasicBlock> predecessors;
     public BitSet dominators;
 
-    public BasicBlock(Instruction l) {
+    public BasicBlock2(Integer l) {
         this.leader = l;
-        this.instructions = new ArrayList<Instruction>();
+        this.instructions = new ArrayList<Integer>();
         this.successors = new HashSet<>();
         this.predecessors = new HashSet<>();
         this.instructions.add(l);
     }
 
-    public void addInstruction(Instruction i) {
+    public void addInstruction(Integer i) {
         this.instructions.add(i);
     }
 
     public void stringify() {
-        for (Instruction i : this.instructions) {
-            System.out.println("\t" + i.line + " " + i.type + " " + i.index1 + " " + i.index2);
-        }
+        // for (Instruction i : this.instructions) {
+        //     System.out.println("\t" + i.line + " " + i.type + " " + i.index1 + " " + i.index2);
+        // }
 
         System.out.println("Predecessors:");
         System.out.println(this.predecessors);

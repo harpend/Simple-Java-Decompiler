@@ -6,6 +6,7 @@ import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import parser.Instruction;
@@ -25,6 +26,7 @@ public class ControlFlowGraph {
     private Instruction prevInstruction = null;
     private BasicBlock prevBB = null;
     private List<List<BasicBlock>> loopList;
+    private Map<Integer, BitSet> dominaterMap;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -94,8 +96,8 @@ public class ControlFlowGraph {
         this.fakeEnd = new BasicBlock(new Instruction(-1, null, 0, 0));
         for (BasicBlock bb : this.bbList) {
             if (fallToNext) {
-                bb.predecessors.add(this.prevBB);
-                this.prevBB.successors.add(bb);
+                bb.predecessors.add(this.prevBB.id);
+                this.prevBB.successors.add(bb.id);
             }
 
             Instruction t = bb.instructions.getLast();
@@ -106,11 +108,11 @@ public class ControlFlowGraph {
 
                 if (t.type.equals("if_icmple")) {
                     BasicBlock bbSwap = this.i2bb.get(t.index1);
-                    bb.successors.add(bbSwap);
-                    bbSwap.predecessors.add(bb);
+                    bb.successors.add(bbSwap.id);
+                    bbSwap.predecessors.add(bb.id);
                 } else if (t.type.contains("return")) {
                     // bb.successors.add(this.fakeEnd.leader.line); i dont think this line is needed?
-                    this.fakeEnd.predecessors.add(bb);
+                    this.fakeEnd.predecessors.add(bb.id);
                 }
             } else {
                 System.out.println("error with terminators");
@@ -141,6 +143,7 @@ public class ControlFlowGraph {
                 BitSet hold = new BitSet(this.bbList.size());
                 hold.set(0, this.bbList.size());
                 for (BasicBlock pred : bb.predecessors) {
+                    // dominators can be a map
                     hold.and(pred.dominators);
                 }
 

@@ -103,4 +103,20 @@ public class IntervalGraph {
             }
         }
     }
+
+    public static List<IntervalNode> cfg2ig(ControlFlowGraph cfg) {
+        // requires the dfs
+        // also the head for interval nodes may want to be instructions
+        // this means I can cut out cfg
+        List<IntervalNode> nodeList = new LinkedList<>();
+        for (BasicBlock bb : cfg.bbList) {
+            IntervalNode n = new IntervalNode(bb.id, bb.id);
+            n.IDs.add(bb.id);
+            n.preds.addAll(bb.predecessors);
+            n.succs.addAll(bb.successors);
+            nodeList.add(n);
+        }
+
+        return nodeList;
+    }
 }

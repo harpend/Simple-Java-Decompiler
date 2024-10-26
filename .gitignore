@@ -21,3 +21,7 @@ Subroutine.class
 BasicBlock.class
 
 ControlFlowGraph.class
+
+IntervalNode.class
+
+IntervalGraph.class

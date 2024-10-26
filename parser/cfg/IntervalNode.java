@@ -4,11 +4,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IntervalNode {
-    Set<Integer> succs;
-    Set<Integer> preds;
-    Set<Integer> IDs;
-    Integer ID;
-    Integer head;
+    public Set<Integer> succs;
+    public Set<Integer> preds;
+    public Set<Integer> IDs;
+    public Integer ID;
+    public Integer head;
     
     public IntervalNode(Integer head, Integer ID) {
         this.succs = new HashSet<Integer>();

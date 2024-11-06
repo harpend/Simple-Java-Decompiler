@@ -132,16 +132,16 @@ public class ControlFlowGraph {
 
     private BasicBlock depthFirstSearch(BasicBlock bb, int dfspPos) {
         this.visited.add(bb);
-        bb.dsfpPos = dfspPos;
+        bb.dfspPos = dfspPos;
         for (BasicBlock succ : bb.successors) {
             if (!this.visited.contains(succ)) {
                 BasicBlock nh = depthFirstSearch(succ, dfspPos + 1);
                 tagLHead(bb, nh);
-            } else if (succ.dsfpPos > 0) {
+            } else if (succ.dfspPos > 0) {
                 this.loopHeaders.add(succ);
                 tagLHead(bb, succ);
             } else if(succ.loopHeader == null) {
-
+                
             } else {
                 BasicBlock h = this.i2bb.get(succ.loopHeader);
                 if (dfspPos > 0) {
@@ -154,12 +154,27 @@ public class ControlFlowGraph {
             }
         }
 
-        bb.dsfpPos = 0;
+        bb.dfspPos = 0;
         return this.i2bb.get(bb.loopHeader);
     }
 
     private void tagLHead(BasicBlock bb, BasicBlock head) {
+        if (bb.equals(head) || head == null) { return; }
+        BasicBlock temp1 = bb;
+        BasicBlock temp2 = head;
+        while (temp1.loopHeader != null) {
+            BasicBlock ih = this.i2bb.get(temp1.loopHeader);
+            if (ih.equals(temp2)) { return; }
+            if (ih.dfspPos < temp2.dfspPos) {
+                temp1.loopHeader = temp2.id;
+                temp1 = temp2;
+                temp2 = ih;
+            } else {
+                temp1 = ih;
+            }
+        }
 
+        temp1.loopHeader = temp2.id;
     }
 
     private void computeDominators() {

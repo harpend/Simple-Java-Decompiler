@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-
 import parser.Instruction;
 
 public class ControlFlowGraph {
@@ -26,11 +25,11 @@ public class ControlFlowGraph {
     private BasicBlock curBB = null;
     private Instruction prevInstruction = null;
     private BasicBlock prevBB = null;
-    private List<List<BasicBlock>> loopList;
     private Map<Integer, BitSet> dominaterMap;
     private Stack<BasicBlock> dfsStack;
     private HashSet<BasicBlock> visited;
     private HashSet<BasicBlock> loopHeaders;
+    private HashMap<BasicBlock, List<BasicBlock>> nodesInLoop;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -40,6 +39,8 @@ public class ControlFlowGraph {
         this.leaders = new HashSet<Integer>();
         this.fall = new HashSet<Integer>();
         this.i2bb = new HashMap<Integer, BasicBlock>();
+        this.loopHeaders = new HashSet<>();
+        this.nodesInLoop = new HashMap<>();
     }
 
     public Instruction addInstruction(Instruction i, boolean cfChange) {
@@ -72,12 +73,11 @@ public class ControlFlowGraph {
         this.dfsStack = new Stack<>();
         this.bbListPostorder = new ArrayList<>();
         depthFirstSearch(this.head, 1);
-        computeDominators();
-        findLoops();
-        introduceLoops();
+        // computeDominators();
     }
 
     private void generateBBS() {
+        int i = 0;
         this.leaders.add(this.instructions.getFirst().line);
         for (Instruction instruction : this.instructions) {
             if (leaders.contains(instruction.line)) {
@@ -85,7 +85,7 @@ public class ControlFlowGraph {
                     this.fall.add(this.prevInstruction.line);
                 }
 
-                this.curBB = new BasicBlock(instruction);
+                this.curBB = new BasicBlock(instruction, i++);
                 this.i2bb.put(instruction.line, this.curBB);
                 this.bbList.add(curBB);
                 if (instruction.equals(this.instructions.getFirst())) {
@@ -101,7 +101,7 @@ public class ControlFlowGraph {
 
     private void linkBBS() {
         boolean fallToNext = false;
-        this.fakeEnd = new BasicBlock(new Instruction(-1, null, 0, 0));
+        // this.fakeEnd = new BasicBlock(new Instruction(-1, null, 0, 0));
         for (BasicBlock bb : this.bbList) {
             if (fallToNext) {
                 bb.predecessors.add(this.prevBB);
@@ -120,7 +120,7 @@ public class ControlFlowGraph {
                     bbSwap.predecessors.add(bb);
                 } else if (t.type.contains("return")) {
                     // bb.successors.add(this.fakeEnd.leader.line); i dont think this line is needed?
-                    this.fakeEnd.predecessors.add(bb);
+                    // this.fakeEnd.predecessors.add(bb);
                 }
             } else {
                 System.out.println("error with terminators");
@@ -134,17 +134,22 @@ public class ControlFlowGraph {
         this.visited.add(bb);
         bb.dfspPos = dfspPos;
         for (BasicBlock succ : bb.successors) {
+            System.out.println(succ.id);
             if (!this.visited.contains(succ)) {
                 BasicBlock nh = depthFirstSearch(succ, dfspPos + 1);
                 tagLHead(bb, nh);
             } else if (succ.dfspPos > 0) {
                 this.loopHeaders.add(succ);
+                succ.loopHeader = succ.id;
+                List<BasicBlock> loopList = new ArrayList<>();
+                loopList.add(succ);
+                this.nodesInLoop.put(succ, loopList);
                 tagLHead(bb, succ);
             } else if(succ.loopHeader == null) {
                 
             } else {
                 BasicBlock h = this.i2bb.get(succ.loopHeader);
-                if (dfspPos > 0) {
+                if (h.dfspPos > 0) {
                     tagLHead(bb, h);
                 } else {
                     // re-entry
@@ -167,6 +172,7 @@ public class ControlFlowGraph {
             if (ih.equals(temp2)) { return; }
             if (ih.dfspPos < temp2.dfspPos) {
                 temp1.loopHeader = temp2.id;
+                this.nodesInLoop.get(temp2).add(temp1);
                 temp1 = temp2;
                 temp2 = ih;
             } else {
@@ -175,6 +181,7 @@ public class ControlFlowGraph {
         }
 
         temp1.loopHeader = temp2.id;
+        this.nodesInLoop.get(temp2).add(temp1);
     }
 
     private void computeDominators() {
@@ -215,61 +222,6 @@ public class ControlFlowGraph {
         }
     }
 
-    private void findLoops() {
-        this.loopList = new ArrayList<List<BasicBlock>>();
-        for (BasicBlock bb : this.bbList) {
-            if (bb.equals(this.head)) {
-                continue;
-            }
-
-            for (BasicBlock succ : bb.successors) {
-                if (bb.dominators.get(succ.id)) {
-                    this.loopList.add(computeLoop(succ, bb));
-                }
-            }
-        }
-    }
-
-    private List<BasicBlock> computeLoop(BasicBlock succ, BasicBlock bb) {
-        List<BasicBlock> loop = new ArrayList<BasicBlock>();
-        loop.add(bb);
-        Stack<BasicBlock> workList = new Stack<BasicBlock>();
-        BasicBlock block;
-        if (succ != bb) {
-            workList.add(succ);
-            loop.add(succ);
-        }
-
-        while (!workList.empty()) {
-            block = workList.pop();
-            for (BasicBlock basicBlock : block.predecessors) {
-                if (!loop.contains(basicBlock)) {
-                    loop.add(basicBlock);
-                    workList.add(basicBlock);
-                }
-            }
-        }
-
-        return loop;
-    }
-
-    private void introduceLoops() {
-        // only supports do while and un nested loops
-        // also make loop a specific class and add functions to it
-        // add compare function to determine if one loop is deeper than the other
-        // maybe by doing a function that calculates the number of elements in a loop
-        // and add 1 to all the loops that contain that basic block and are smaller in the number of basic blocks they contain
-        
-        for (List<BasicBlock> loop : this.loopList) {
-            loop.getFirst().instructions.addFirst(new Instruction(0, "do", 0, 0));
-            loop.getLast().instructions.addLast(new Instruction(0, "do_end", 0, 0));
-        }
-    }
-
-    private void sortLoops() {
-        // sort the loops from the inner most to the outermost
-    }
-
     public void stringify() {
         System.out.println("Insert method name:");
         int i = 0;
@@ -279,12 +231,15 @@ public class ControlFlowGraph {
             i++;
         }
 
-        for (List<BasicBlock> bbLoopList : this.loopList) {
-            System.out.println("Loop");
-            for (BasicBlock bb : bbLoopList) {
-                System.out.println("\t" + bb.id);
+        if (this.loopHeaders != null) {
+            for (BasicBlock bbLoopHeader : this.loopHeaders) {
+                System.out.println("-----loop-------");
+                for (BasicBlock bb : this.nodesInLoop.get(bbLoopHeader)) {
+                    System.out.println(bb.id);
+                }
+                System.out.println("----------------");
             }
-            System.out.println("Loop End");
+
         }
     }
 

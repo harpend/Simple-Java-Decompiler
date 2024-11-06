@@ -11,7 +11,7 @@ public class BasicBlock {
     public Instruction leader;
     public Instruction terminator;
     public boolean visited;
-    public int id; // reverse postorder numbering
+    public int id; 
     public List<Instruction> instructions;
     public Set<BasicBlock> successors;
     public Set<BasicBlock> predecessors;
@@ -19,7 +19,7 @@ public class BasicBlock {
     public int dfspPos;
     public Integer loopHeader;
 
-    public BasicBlock(Instruction l) {
+    public BasicBlock(Instruction l, int id) {
         this.leader = l;
         this.instructions = new ArrayList<Instruction>();
         this.successors = new HashSet<>();
@@ -27,6 +27,7 @@ public class BasicBlock {
         this.instructions.add(l);
         this.dfspPos = 0;
         this.loopHeader = null;
+        this.id = id;
     }
 
     public void addInstruction(Instruction i) {

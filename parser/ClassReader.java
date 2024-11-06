@@ -793,6 +793,7 @@ public class ClassReader {
             readMethods();
             readAttributes();
             System.out.println("\n");
+            System.exit(1);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -16,6 +16,8 @@ public class BasicBlock {
     public Set<BasicBlock> successors;
     public Set<BasicBlock> predecessors;
     public BitSet dominators;
+    public int dsfpPos;
+    public Integer loopHeader;
 
     public BasicBlock(Instruction l) {
         this.leader = l;
@@ -23,6 +25,8 @@ public class BasicBlock {
         this.successors = new HashSet<>();
         this.predecessors = new HashSet<>();
         this.instructions.add(l);
+        this.dsfpPos = 0;
+        this.loopHeader = null;
     }
 
     public void addInstruction(Instruction i) {

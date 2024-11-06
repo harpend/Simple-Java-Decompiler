@@ -30,6 +30,7 @@ public class ControlFlowGraph {
     private Map<Integer, BitSet> dominaterMap;
     private Stack<BasicBlock> dfsStack;
     private HashSet<BasicBlock> visited;
+    private HashSet<BasicBlock> loopHeaders;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -70,8 +71,7 @@ public class ControlFlowGraph {
         this.visited = new HashSet<>(this.bbList.size());
         this.dfsStack = new Stack<>();
         this.bbListPostorder = new ArrayList<>();
-        depthFirstSearch(this.head);
-        postOrderLabeling();
+        depthFirstSearch(this.head, 1);
         computeDominators();
         findLoops();
         introduceLoops();
@@ -130,23 +130,36 @@ public class ControlFlowGraph {
         }
     }
 
-    private void depthFirstSearch(BasicBlock bb) {
+    private BasicBlock depthFirstSearch(BasicBlock bb, int dfspPos) {
+        this.visited.add(bb);
+        bb.dsfpPos = dfspPos;
         for (BasicBlock succ : bb.successors) {
             if (!this.visited.contains(succ)) {
-                depthFirstSearch(succ);
+                BasicBlock nh = depthFirstSearch(succ, dfspPos + 1);
+                tagLHead(bb, nh);
+            } else if (succ.dsfpPos > 0) {
+                this.loopHeaders.add(succ);
+                tagLHead(bb, succ);
+            } else if(succ.loopHeader == null) {
+
+            } else {
+                BasicBlock h = this.i2bb.get(succ.loopHeader);
+                if (dfspPos > 0) {
+                    tagLHead(bb, h);
+                } else {
+                    // re-entry
+                    System.out.println("reentry unsupported");
+                    System.exit(1);
+                }
             }
         }
 
-        this.dfsStack.push(bb);
+        bb.dsfpPos = 0;
+        return this.i2bb.get(bb.loopHeader);
     }
 
-    private void postOrderLabeling() {
-        int i = 1;
-        while (!this.dfsStack.isEmpty()) {
-            BasicBlock bb = this.dfsStack.pop();
-            bb.id = i;
-            this.bbListPostorder.add(bb);
-        }
+    private void tagLHead(BasicBlock bb, BasicBlock head) {
+
     }
 
     private void computeDominators() {

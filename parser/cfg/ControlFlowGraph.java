@@ -73,6 +73,7 @@ public class ControlFlowGraph {
         this.dfsStack = new Stack<>();
         this.bbListPostorder = new ArrayList<>();
         depthFirstSearch(this.head, 1);
+        loopTypes();
         // computeDominators();
     }
 
@@ -139,20 +140,9 @@ public class ControlFlowGraph {
                 BasicBlock nh = depthFirstSearch(succ, dfspPos + 1);
                 tagLHead(bb, nh);
             } else if (succ.dfspPos > 0) {
-                this.loopHeaders.add(succ); // if it has 2 successors then this means it is do-while
-                // 1 successor do while (there is an exception but check thesis)
+                this.loopHeaders.add(succ);
                 Loop l = new Loop(succ, "temp");
-                if (succ.successors.size() == 1) {
-                    l.loopType = "while";
-                    this.loopMap.put(succ, l);
-                } else if (succ.successors.size() > 1) {
-                    // not full set of possibilities
-                    l.loopType = "do-while";
-                    this.loopMap.put(succ, l);
-                } else {
-                    System.out.println("not supported loop type");
-                    System.exit(1);
-                }
+                this.loopMap.put(succ, l);
 
                 l.nodesInLoop.add(succ);
                 succ.loopHeader = succ.id;
@@ -194,6 +184,39 @@ public class ControlFlowGraph {
 
         temp1.loopHeader = temp2.id;
         this.loopMap.get(temp2).nodesInLoop.add(temp1);
+    }
+
+    private void loopTypes() {
+        for (BasicBlock h : this.loopMap.keySet()) {
+            Loop l = this.loopMap.get(h);
+            BasicBlock t = l.nodesInLoop.getLast();
+            int tExits = t.successors.size();
+            int hExits = h.successors.size();
+            if (tExits == 2) {
+                if (hExits == 2) {
+                    boolean inLoop = true;
+                    for (BasicBlock succ : h.successors) {
+                        if (!l.nodesInLoop.contains(succ)) {
+                            inLoop = false;
+                        }
+                    }
+                    
+                    if (inLoop) {
+                        l.loopType = "pre";
+                    } else {
+                        l.loopType = "post";
+                    }
+                } else {
+                    l.loopType = "post";
+                }
+            } else {
+                if (hExits == 2) {
+                    l.loopType = "pre";
+                } else {
+                    l.loopType = "endless";
+                }
+            }
+        }
     }
 
     private void computeDominators() {

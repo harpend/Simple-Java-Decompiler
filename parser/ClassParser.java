@@ -35,7 +35,7 @@ public class ClassParser {
 
         public parser.ast.ClassDeclaration ParseClass() {
             this.cr = new ClassReader();
-            cr.ReadClass("./tests/class/test4.class");
+            cr.ReadClass("./tests/class/nestedLoop.class");
             String flags = String.join(" ", this.cr.accessFlags);
             String name = this.cr.ResolveCPIndex(this.cr.thisClass);
             List<parser.ast.Subroutine> s = parseSubroutines();
@@ -119,6 +119,7 @@ public class ClassParser {
                     break;
                 case "istore_1":
                 case "istore_3":
+                case "dstore":
                 case "dstore_1":
                 case "dstore_2":
                     stype = typeFromStoreInstruction(i.type);

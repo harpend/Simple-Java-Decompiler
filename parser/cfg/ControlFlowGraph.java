@@ -135,7 +135,6 @@ public class ControlFlowGraph {
         this.visited.add(bb);
         bb.dfspPos = dfspPos;
         for (BasicBlock succ : bb.successors) {
-            System.out.println(succ.id);
             if (!this.visited.contains(succ)) {
                 BasicBlock nh = depthFirstSearch(succ, dfspPos + 1);
                 tagLHead(bb, nh);
@@ -202,6 +201,7 @@ public class ControlFlowGraph {
                     }
                     
                     if (inLoop) {
+                        System.out.println("check1");
                         l.loopType = "pre";
                         h.instructions.addFirst(new Instruction(0, "while", 0, 0));
                         t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
@@ -217,6 +217,7 @@ public class ControlFlowGraph {
                 }
             } else {
                 if (hExits == 2) {
+                    System.out.println("check2");
                     l.loopType = "pre";
                     h.instructions.addFirst(new Instruction(0, "while", 0, 0));
                     t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
@@ -282,7 +283,6 @@ public class ControlFlowGraph {
                 System.out.println(this.loopMap.get(bbLoopHeader).loopType);
                 for (BasicBlock bb : this.loopMap.get(bbLoopHeader).nodesInLoop) {
                     System.out.println(bb.id);
-                    System.out.println();
                 }
                 System.out.println("----------------");
             }

@@ -426,8 +426,12 @@ public class ClassReader {
         for (int i = 0; i < lineNumberTableLength; i++) {
             Dictionary<String, Object> stackMapEntry = new Hashtable<>();
             int frameType = getByte();
+            if (0 <= frameType && frameType <= 63) {
+                stackMapEntry.put("frame_type", frameType);
+                stackMapFrame.add(stackMapEntry);
+                continue;
+            }
             int offsetDelta = getShort();
-            stackMapEntry.put("frame_type", frameType);
             stackMapEntry.put("offset_delta", offsetDelta);
             List<Integer> frameElems = new ArrayList<>();
 
@@ -582,6 +586,20 @@ public class ClassReader {
                 break;
                 case (byte)0x2A:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "aload_0", 0, 0), false));
+                break;
+                case (byte)0x39:
+                if (wide) {
+                    b2[0] = codeBytes[++i];
+                    b2[1] = codeBytes[++i];
+                    b1int = concatByteToInt(b2);
+                    codeEl.add(cfg.addInstruction( new Instruction(pc, "dstore", b1int, 0), false));
+                    pc+=2;
+                } else {
+                    b1[0] = codeBytes[++i];
+                    b1int = concatByteToInt(b1);
+                    codeEl.add(cfg.addInstruction( new Instruction(pc, "dstore", b1int, 0), false));
+                    pc++;
+                }
                 break;
                 case (byte)0x3C:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "istore_1", 1, 0), false));

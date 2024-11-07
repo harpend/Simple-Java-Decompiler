@@ -203,17 +203,27 @@ public class ControlFlowGraph {
                     
                     if (inLoop) {
                         l.loopType = "pre";
+                        h.instructions.addFirst(new Instruction(0, "while", 0, 0));
+                        t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
                     } else {
                         l.loopType = "post";
+                        h.instructions.addFirst(new Instruction(0, "do", 0, 0));
+                        t.instructions.addLast(new Instruction(0, "do_end", 0, 0));
                     }
                 } else {
                     l.loopType = "post";
+                    h.instructions.addFirst(new Instruction(0, "do", 0, 0));
+                    t.instructions.addLast(new Instruction(0, "do_end", 0, 0));
                 }
             } else {
                 if (hExits == 2) {
                     l.loopType = "pre";
+                    h.instructions.addFirst(new Instruction(0, "while", 0, 0));
+                    t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
                 } else {
                     l.loopType = "endless";
+                    System.out.println("unexpected endless loop");
+                    System.exit(1);
                 }
             }
         }

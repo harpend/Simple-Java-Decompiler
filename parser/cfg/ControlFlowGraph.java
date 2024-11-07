@@ -29,7 +29,7 @@ public class ControlFlowGraph {
     private Stack<BasicBlock> dfsStack;
     private HashSet<BasicBlock> visited;
     private HashSet<BasicBlock> loopHeaders;
-    private HashMap<BasicBlock, List<BasicBlock>> nodesInLoop;
+    private HashMap<BasicBlock, Loop> loopMap;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -40,7 +40,7 @@ public class ControlFlowGraph {
         this.fall = new HashSet<Integer>();
         this.i2bb = new HashMap<Integer, BasicBlock>();
         this.loopHeaders = new HashSet<>();
-        this.nodesInLoop = new HashMap<>();
+        this.loopMap = new HashMap<>();
     }
 
     public Instruction addInstruction(Instruction i, boolean cfChange) {
@@ -139,11 +139,23 @@ public class ControlFlowGraph {
                 BasicBlock nh = depthFirstSearch(succ, dfspPos + 1);
                 tagLHead(bb, nh);
             } else if (succ.dfspPos > 0) {
-                this.loopHeaders.add(succ);
+                this.loopHeaders.add(succ); // if it has 2 successors then this means it is do-while
+                // 1 successor do while (there is an exception but check thesis)
+                Loop l = new Loop(succ, "temp");
+                if (succ.successors.size() == 1) {
+                    l.loopType = "while";
+                    this.loopMap.put(succ, l);
+                } else if (succ.successors.size() > 1) {
+                    // not full set of possibilities
+                    l.loopType = "do-while";
+                    this.loopMap.put(succ, l);
+                } else {
+                    System.out.println("not supported loop type");
+                    System.exit(1);
+                }
+
+                l.nodesInLoop.add(succ);
                 succ.loopHeader = succ.id;
-                List<BasicBlock> loopList = new ArrayList<>();
-                loopList.add(succ);
-                this.nodesInLoop.put(succ, loopList);
                 tagLHead(bb, succ);
             } else if(succ.loopHeader == null) {
                 
@@ -172,7 +184,7 @@ public class ControlFlowGraph {
             if (ih.equals(temp2)) { return; }
             if (ih.dfspPos < temp2.dfspPos) {
                 temp1.loopHeader = temp2.id;
-                this.nodesInLoop.get(temp2).add(temp1);
+                this.loopMap.get(temp2).nodesInLoop.add(temp1);
                 temp1 = temp2;
                 temp2 = ih;
             } else {
@@ -181,7 +193,7 @@ public class ControlFlowGraph {
         }
 
         temp1.loopHeader = temp2.id;
-        this.nodesInLoop.get(temp2).add(temp1);
+        this.loopMap.get(temp2).nodesInLoop.add(temp1);
     }
 
     private void computeDominators() {
@@ -234,8 +246,10 @@ public class ControlFlowGraph {
         if (this.loopHeaders != null) {
             for (BasicBlock bbLoopHeader : this.loopHeaders) {
                 System.out.println("-----loop-------");
-                for (BasicBlock bb : this.nodesInLoop.get(bbLoopHeader)) {
+                System.out.println(this.loopMap.get(bbLoopHeader).loopType);
+                for (BasicBlock bb : this.loopMap.get(bbLoopHeader).nodesInLoop) {
                     System.out.println(bb.id);
+                    System.out.println();
                 }
                 System.out.println("----------------");
             }

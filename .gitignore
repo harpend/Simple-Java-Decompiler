@@ -25,3 +25,5 @@ ControlFlowGraph.class
 IntervalNode.class
 
 IntervalGraph.class
+
+Loop.class

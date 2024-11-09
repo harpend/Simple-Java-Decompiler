@@ -40,11 +40,17 @@ public class BasicBlock {
         }
 
         System.out.println("Predecessors:");
-        System.out.println(this.predecessors);
+        for (BasicBlock pred : this.predecessors) {
+            System.out.print(pred.id + " ");
+        }
+        System.out.println();
 
         System.out.println();
         System.out.println("Successors:");
-        System.out.println(this.successors);
+        for (BasicBlock succ : this.successors) {
+            System.out.print(succ.id + " ");
+        }
+        System.out.println();
 
         System.out.println();
     }

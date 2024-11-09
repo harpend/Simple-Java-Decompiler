@@ -140,15 +140,21 @@ public class ControlFlowGraph {
     private BasicBlock depthFirstSearch(BasicBlock bb, int dfspPos) {
         this.visited.add(bb);
         bb.dfspPos = dfspPos;
-        for (BasicBlock succ : bb.successors) {
+        List<BasicBlock> successorsCopy = new ArrayList<>(bb.successors);
+        for (BasicBlock succ : successorsCopy) {
             if (!this.visited.contains(succ)) {
                 BasicBlock nh = depthFirstSearch(succ, dfspPos + 1);
+
+                if (nh != null && bb.id == 0 && nh.id == 1) {
+                    System.out.println(succ.id);
+                }
                 tagLHead(bb, nh);
             } else if (succ.dfspPos > 0) {
                 if (this.loopHeaders.add(succ)) {
                     Loop l = new Loop(succ, "temp");
                     this.loopMap.put(succ, l);
                     l.nodesInLoop.add(succ);
+                    l.tail = succ;
                     succ.loopHeader = succ.id;
                     tagLHead(bb, succ);
                 } else {
@@ -156,6 +162,8 @@ public class ControlFlowGraph {
                     // insert new block and relink to that one
                     // extract to relink(bb, bb){return insertBB}
                     // may run multiple times
+
+                    // can extract and do in other places as well
                     Instruction fakeInstruction = new Instruction(scID, "insert", 0, 0);
                     BasicBlock insert = new BasicBlock(fakeInstruction, scID);
                     bbList.add(insert);
@@ -163,31 +171,41 @@ public class ControlFlowGraph {
                     id2bb.put(this.scID--, insert);
                     // relink
                     Loop prevL = this.loopMap.get(succ);
+                    HashSet<BasicBlock> forRemoval = new HashSet<>();
                     for (BasicBlock pred : succ.predecessors) {
                         if (!prevL.nodesInLoop.contains(pred)) {
                             insert.predecessors.add(pred);
+                            forRemoval.add(pred);
+                            pred.successors.add(insert);
                         }
                     }
 
+                    for (BasicBlock basicBlock : forRemoval) {
+                        succ.predecessors.remove(basicBlock); 
+                        basicBlock.successors.remove(succ);
+                    }
+
+                    this.visited.add(insert);
                     insert.successors.add(succ);
+                    succ.predecessors.add(insert);
                     BasicBlock latch = prevL.nodesInLoop.getLast();
                     latch.successors.remove(succ);
                     succ.predecessors.remove(latch);
                     latch.successors.add(insert);
                     insert.successors.add(latch);
                     prevL.header = insert;
-                    // prevL.nodesInLoop.remove(succ);
+                    prevL.nodesInLoop.remove(succ);
+                    prevL.nodesInLoop.add(insert);
                     this.loopMap.put(insert, prevL);
                     this.loopHeaders.add(insert);
-
                     // new loop
                     Loop l = new Loop(succ, "temp");
                     this.loopMap.put(succ, l);
                     l.nodesInLoop.add(succ);
+                    l.header = succ;
+                    l.tail = succ;
                     succ.loopHeader = succ.id;
                     tagLHead(bb, succ);
-                    
-                    
                 }
             } else if(succ.loopHeader == null) {
                 
@@ -216,14 +234,12 @@ public class ControlFlowGraph {
             if (ih.equals(temp2)) { return; }
             if (ih.dfspPos < temp2.dfspPos) {
                 temp1.loopHeader = temp2.id;
-                this.loopMap.get(temp2).nodesInLoop.add(temp1);
+                Loop l = this.loopMap.get(temp2);
+                l.nodesInLoop.add(temp1);
+                l.tail = temp1;
                 temp1 = temp2;
                 temp2 = ih;
             } else {
-                if (temp1.equals(ih)) {
-
-                    break;
-                }
                 temp1 = ih;
             }
         }
@@ -235,7 +251,7 @@ public class ControlFlowGraph {
     private void loopTypes() {
         for (BasicBlock h : this.loopMap.keySet()) {
             Loop l = this.loopMap.get(h);
-            BasicBlock t = l.nodesInLoop.getLast();
+            BasicBlock t = l.tail;
             int tExits = t.successors.size();
             int hExits = h.successors.size();
             if (tExits == 2) {
@@ -267,33 +283,9 @@ public class ControlFlowGraph {
                     h.instructions.addFirst(new Instruction(0, "while", 0, 0));
                     t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
                 } else {
-                    System.out.println("header: " + h.id);
-                    System.out.println("tail: " + t.id);
-                    System.out.println("---------------");
-                    System.out.println("successors");
-                    for (BasicBlock pred : h.successors) {
-                        System.out.print(pred.id + " ");
-                    }
-                    System.out.println();
-                    for (BasicBlock pred : t.successors) {
-                        System.out.print(pred.id + " ");
-                    }
-                    System.out.println();
-                    System.out.println("---------------");
-                    System.out.println("---------------");
-                    System.out.println("predeccessors");
-                    for (BasicBlock pred : h.predecessors) {
-                        System.out.print(pred.id + " ");
-                    }
-                    System.out.println();
-                    for (BasicBlock pred : t.predecessors) {
-                        System.out.print(pred.id + " ");
-                    }
-                    System.out.println();
-                    System.out.println("---------------");
                     l.loopType = "endless";
                     System.out.println("unexpected endless loop");
-                    // System.exit(1);
+                    System.exit(1);
                 }
             }
         }
@@ -338,13 +330,13 @@ public class ControlFlowGraph {
     }
 
     public void stringify() {
-        System.out.println("Insert method name:");
-        int i = 0;
-        for (BasicBlock bb : this.bbList) {
-            System.out.println("BB " + i + ":");
-            bb.stringify();
-            i++;
-        }
+        // System.out.println("Insert method name:");
+        // int i = 0;
+        // for (BasicBlock bb : this.bbList) {
+        //     System.out.println("BB " + i + ":");
+        //     bb.stringify();
+        //     i++;
+        // }
 
         if (this.loopHeaders != null) {
             for (BasicBlock bbLoopHeader : this.loopHeaders) {

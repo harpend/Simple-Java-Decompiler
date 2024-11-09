@@ -16,6 +16,7 @@ public class ControlFlowGraph {
     public List<BasicBlock> bbList;
     public List<BasicBlock> bbListPostorder;
     public HashMap<Integer, BasicBlock> i2bb;
+    public HashMap<Integer, BasicBlock> id2bb;
     private HashSet<Integer> terminators;
     private HashSet<Integer> leaders;
     private HashSet<Integer> fall;
@@ -30,6 +31,7 @@ public class ControlFlowGraph {
     private HashSet<BasicBlock> visited;
     private HashSet<BasicBlock> loopHeaders;
     private HashMap<BasicBlock, Loop> loopMap;
+    private Integer scID;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -39,8 +41,10 @@ public class ControlFlowGraph {
         this.leaders = new HashSet<Integer>();
         this.fall = new HashSet<Integer>();
         this.i2bb = new HashMap<Integer, BasicBlock>();
+        this.id2bb = new HashMap<>();
         this.loopHeaders = new HashSet<>();
         this.loopMap = new HashMap<>();
+        this.scID = -1;
     }
 
     public Instruction addInstruction(Instruction i, boolean cfChange) {
@@ -86,8 +90,9 @@ public class ControlFlowGraph {
                     this.fall.add(this.prevInstruction.line);
                 }
 
-                this.curBB = new BasicBlock(instruction, i++);
+                this.curBB = new BasicBlock(instruction, i);
                 this.i2bb.put(instruction.line, this.curBB);
+                this.id2bb.put(i++, this.curBB);
                 this.bbList.add(curBB);
                 if (instruction.equals(this.instructions.getFirst())) {
                     this.head = this.curBB;
@@ -131,6 +136,7 @@ public class ControlFlowGraph {
         }
     }
 
+    boolean check = false;
     private BasicBlock depthFirstSearch(BasicBlock bb, int dfspPos) {
         this.visited.add(bb);
         bb.dfspPos = dfspPos;
@@ -139,17 +145,54 @@ public class ControlFlowGraph {
                 BasicBlock nh = depthFirstSearch(succ, dfspPos + 1);
                 tagLHead(bb, nh);
             } else if (succ.dfspPos > 0) {
-                this.loopHeaders.add(succ);
-                Loop l = new Loop(succ, "temp");
-                this.loopMap.put(succ, l);
+                if (this.loopHeaders.add(succ)) {
+                    Loop l = new Loop(succ, "temp");
+                    this.loopMap.put(succ, l);
+                    l.nodesInLoop.add(succ);
+                    succ.loopHeader = succ.id;
+                    tagLHead(bb, succ);
+                } else {
+                    // nested loop with same header 
+                    // insert new block and relink to that one
+                    // extract to relink(bb, bb){return insertBB}
+                    // may run multiple times
+                    Instruction fakeInstruction = new Instruction(scID, "insert", 0, 0);
+                    BasicBlock insert = new BasicBlock(fakeInstruction, scID);
+                    bbList.add(insert);
+                    i2bb.put(this.scID, insert);
+                    id2bb.put(this.scID--, insert);
+                    // relink
+                    Loop prevL = this.loopMap.get(succ);
+                    for (BasicBlock pred : succ.predecessors) {
+                        if (!prevL.nodesInLoop.contains(pred)) {
+                            insert.predecessors.add(pred);
+                        }
+                    }
 
-                l.nodesInLoop.add(succ);
-                succ.loopHeader = succ.id;
-                tagLHead(bb, succ);
+                    insert.successors.add(succ);
+                    BasicBlock latch = prevL.nodesInLoop.getLast();
+                    latch.successors.remove(succ);
+                    succ.predecessors.remove(latch);
+                    latch.successors.add(insert);
+                    insert.successors.add(latch);
+                    prevL.header = insert;
+                    // prevL.nodesInLoop.remove(succ);
+                    this.loopMap.put(insert, prevL);
+                    this.loopHeaders.add(insert);
+
+                    // new loop
+                    Loop l = new Loop(succ, "temp");
+                    this.loopMap.put(succ, l);
+                    l.nodesInLoop.add(succ);
+                    succ.loopHeader = succ.id;
+                    tagLHead(bb, succ);
+                    
+                    
+                }
             } else if(succ.loopHeader == null) {
                 
             } else {
-                BasicBlock h = this.i2bb.get(succ.loopHeader);
+                BasicBlock h = this.id2bb.get(succ.loopHeader);
                 if (h.dfspPos > 0) {
                     tagLHead(bb, h);
                 } else {
@@ -161,7 +204,7 @@ public class ControlFlowGraph {
         }
 
         bb.dfspPos = 0;
-        return this.i2bb.get(bb.loopHeader);
+        return this.id2bb.get(bb.loopHeader);
     }
 
     private void tagLHead(BasicBlock bb, BasicBlock head) {
@@ -169,7 +212,7 @@ public class ControlFlowGraph {
         BasicBlock temp1 = bb;
         BasicBlock temp2 = head;
         while (temp1.loopHeader != null) {
-            BasicBlock ih = this.i2bb.get(temp1.loopHeader);
+            BasicBlock ih = this.id2bb.get(temp1.loopHeader);
             if (ih.equals(temp2)) { return; }
             if (ih.dfspPos < temp2.dfspPos) {
                 temp1.loopHeader = temp2.id;
@@ -177,6 +220,10 @@ public class ControlFlowGraph {
                 temp1 = temp2;
                 temp2 = ih;
             } else {
+                if (temp1.equals(ih)) {
+
+                    break;
+                }
                 temp1 = ih;
             }
         }
@@ -201,7 +248,6 @@ public class ControlFlowGraph {
                     }
                     
                     if (inLoop) {
-                        System.out.println("check1");
                         l.loopType = "pre";
                         h.instructions.addFirst(new Instruction(0, "while", 0, 0));
                         t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
@@ -217,14 +263,37 @@ public class ControlFlowGraph {
                 }
             } else {
                 if (hExits == 2) {
-                    System.out.println("check2");
                     l.loopType = "pre";
                     h.instructions.addFirst(new Instruction(0, "while", 0, 0));
                     t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
                 } else {
+                    System.out.println("header: " + h.id);
+                    System.out.println("tail: " + t.id);
+                    System.out.println("---------------");
+                    System.out.println("successors");
+                    for (BasicBlock pred : h.successors) {
+                        System.out.print(pred.id + " ");
+                    }
+                    System.out.println();
+                    for (BasicBlock pred : t.successors) {
+                        System.out.print(pred.id + " ");
+                    }
+                    System.out.println();
+                    System.out.println("---------------");
+                    System.out.println("---------------");
+                    System.out.println("predeccessors");
+                    for (BasicBlock pred : h.predecessors) {
+                        System.out.print(pred.id + " ");
+                    }
+                    System.out.println();
+                    for (BasicBlock pred : t.predecessors) {
+                        System.out.print(pred.id + " ");
+                    }
+                    System.out.println();
+                    System.out.println("---------------");
                     l.loopType = "endless";
                     System.out.println("unexpected endless loop");
-                    System.exit(1);
+                    // System.exit(1);
                 }
             }
         }

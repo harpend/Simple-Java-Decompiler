@@ -144,7 +144,7 @@ public class ControlFlowGraph {
                 BasicBlock nh = depthFirstSearch(succ, dfspPos + 1);
                 tagLHead(bb, nh);
             } else if (succ.dfspPos > 0) {
-                Edge backEdge = new Edge(bb, succ);
+                Edge backEdge = new Edge(succ, bb);
                 this.loopBackEdges.add(backEdge);
                 Loop l = new Loop(backEdge, "temp");
                 this.loopMap.put(backEdge, l);
@@ -197,6 +197,15 @@ public class ControlFlowGraph {
             Loop l = this.loopMap.get(e);
             BasicBlock h = l.backEdge.to;
             BasicBlock t = l.backEdge.from;
+            System.out.println(h.id + " " + t.id);
+            if (h == t) {
+                l = new Loop(l.backEdge, "post");
+                l.nodesInLoop.add(t);
+                h.instructions.addFirst(new Instruction(0, "do", 0, 0));
+                t.instructions.addLast(new Instruction(0, "do_end", 0, 0));
+                continue;
+            }
+
             int tExits = t.successors.size();
             int hExits = h.successors.size();
             if (tExits == 2) {
@@ -275,13 +284,13 @@ public class ControlFlowGraph {
     }
 
     public void stringify() {
-        // System.out.println("Insert method name:");
-        // int i = 0;
-        // for (BasicBlock bb : this.bbList) {
-        //     System.out.println("BB " + i + ":");
-        //     bb.stringify();
-        //     i++;
-        // }
+        System.out.println("Insert method name:");
+        int i = 0;
+        for (BasicBlock bb : this.bbList) {
+            System.out.println("BB " + i + ":");
+            bb.stringify();
+            i++;
+        }
 
         if (this.loopBackEdges != null) {
             for (Edge bbLoopEdge : this.loopBackEdges) {

@@ -197,6 +197,7 @@ public class ControlFlowGraph {
             Loop l = this.loopMap.get(e);
             BasicBlock h = l.backEdge.to;
             BasicBlock t = l.backEdge.from;
+            l.stringify();
             System.out.println(h.id + " " + t.id);
             if (h == t) {
                 l = new Loop(l.backEdge, "post");
@@ -218,13 +219,13 @@ public class ControlFlowGraph {
                     }
                     
                     if (inLoop) {
-                        l.loopType = "pre";
-                        h.instructions.addFirst(new Instruction(0, "while", 0, 0));
-                        t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
-                    } else {
                         l.loopType = "post";
                         h.instructions.addFirst(new Instruction(0, "do", 0, 0));
                         t.instructions.addLast(new Instruction(0, "do_end", 0, 0));
+                      } else {
+                        l.loopType = "pre";
+                        h.instructions.addFirst(new Instruction(0, "while", 0, 0));
+                        t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
                     }
                 } else {
                     l.loopType = "post";
@@ -284,25 +285,25 @@ public class ControlFlowGraph {
     }
 
     public void stringify() {
-        System.out.println("Insert method name:");
-        int i = 0;
-        for (BasicBlock bb : this.bbList) {
-            System.out.println("BB " + i + ":");
-            bb.stringify();
-            i++;
-        }
+        // System.out.println("Insert method name:");
+        // int i = 0;
+        // for (BasicBlock bb : this.bbList) {
+        //     System.out.println("BB " + i + ":");
+        //     bb.stringify();
+        //     i++;
+        // }
 
-        if (this.loopBackEdges != null) {
-            for (Edge bbLoopEdge : this.loopBackEdges) {
-                System.out.println("-----loop-------");
-                System.out.println(this.loopMap.get(bbLoopEdge).loopType);
-                for (BasicBlock bb : this.loopMap.get(bbLoopEdge).nodesInLoop) {
-                    System.out.println(bb.id);
-                }
-                System.out.println("----------------");
-            }
+        // if (this.loopBackEdges != null) {
+        //     for (Edge bbLoopEdge : this.loopBackEdges) {
+        //         System.out.println("-----loop-------");
+        //         System.out.println(this.loopMap.get(bbLoopEdge).loopType);
+        //         for (BasicBlock bb : this.loopMap.get(bbLoopEdge).nodesInLoop) {
+        //             System.out.println(bb.id);
+        //         }
+        //         System.out.println("----------------");
+        //     }
 
-        }
+        // }
     }
 
     public List<Instruction> getInstructions() {

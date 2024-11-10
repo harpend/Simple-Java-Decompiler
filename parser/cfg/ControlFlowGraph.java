@@ -29,8 +29,8 @@ public class ControlFlowGraph {
     private Map<Integer, BitSet> dominaterMap;
     private Stack<BasicBlock> dfsStack;
     private HashSet<BasicBlock> visited;
-    private HashSet<BasicBlock> loopHeaders;
-    private HashMap<BasicBlock, Loop> loopMap;
+    private HashSet<Edge> loopBackEdges;
+    private HashMap<Edge, Loop> loopMap;
     private Integer scID;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
@@ -42,7 +42,7 @@ public class ControlFlowGraph {
         this.fall = new HashSet<Integer>();
         this.i2bb = new HashMap<Integer, BasicBlock>();
         this.id2bb = new HashMap<>();
-        this.loopHeaders = new HashSet<>();
+        this.loopBackEdges = new HashSet<>();
         this.loopMap = new HashMap<>();
         this.scID = -1;
     }
@@ -136,81 +136,25 @@ public class ControlFlowGraph {
         }
     }
 
-    boolean check = false;
     private BasicBlock depthFirstSearch(BasicBlock bb, int dfspPos) {
         this.visited.add(bb);
         bb.dfspPos = dfspPos;
-        List<BasicBlock> successorsCopy = new ArrayList<>(bb.successors);
-        for (BasicBlock succ : successorsCopy) {
+        for (BasicBlock succ : bb.successors) {
             if (!this.visited.contains(succ)) {
                 BasicBlock nh = depthFirstSearch(succ, dfspPos + 1);
-
-                if (nh != null && bb.id == 0 && nh.id == 1) {
-                    System.out.println(succ.id);
-                }
                 tagLHead(bb, nh);
             } else if (succ.dfspPos > 0) {
-                if (this.loopHeaders.add(succ)) {
-                    Loop l = new Loop(succ, "temp");
-                    this.loopMap.put(succ, l);
-                    l.nodesInLoop.add(succ);
-                    l.tail = succ;
-                    succ.loopHeader = succ.id;
-                    tagLHead(bb, succ);
-                } else {
-                    // nested loop with same header 
-                    // insert new block and relink to that one
-                    // extract to relink(bb, bb){return insertBB}
-                    // may run multiple times
-
-                    // can extract and do in other places as well
-                    Instruction fakeInstruction = new Instruction(scID, "insert", 0, 0);
-                    BasicBlock insert = new BasicBlock(fakeInstruction, scID);
-                    bbList.add(insert);
-                    i2bb.put(this.scID, insert);
-                    id2bb.put(this.scID--, insert);
-                    // relink
-                    Loop prevL = this.loopMap.get(succ);
-                    HashSet<BasicBlock> forRemoval = new HashSet<>();
-                    for (BasicBlock pred : succ.predecessors) {
-                        if (!prevL.nodesInLoop.contains(pred)) {
-                            insert.predecessors.add(pred);
-                            forRemoval.add(pred);
-                            pred.successors.add(insert);
-                        }
-                    }
-
-                    for (BasicBlock basicBlock : forRemoval) {
-                        succ.predecessors.remove(basicBlock); 
-                        basicBlock.successors.remove(succ);
-                    }
-
-                    this.visited.add(insert);
-                    insert.successors.add(succ);
-                    succ.predecessors.add(insert);
-                    BasicBlock latch = prevL.nodesInLoop.getLast();
-                    latch.successors.remove(succ);
-                    succ.predecessors.remove(latch);
-                    latch.successors.add(insert);
-                    insert.successors.add(latch);
-                    prevL.header = insert;
-                    prevL.nodesInLoop.remove(succ);
-                    prevL.nodesInLoop.add(insert);
-                    this.loopMap.put(insert, prevL);
-                    this.loopHeaders.add(insert);
-                    // new loop
-                    Loop l = new Loop(succ, "temp");
-                    this.loopMap.put(succ, l);
-                    l.nodesInLoop.add(succ);
-                    l.header = succ;
-                    l.tail = succ;
-                    succ.loopHeader = succ.id;
-                    tagLHead(bb, succ);
-                }
-            } else if(succ.loopHeader == null) {
+                Edge backEdge = new Edge(bb, succ);
+                this.loopBackEdges.add(backEdge);
+                Loop l = new Loop(backEdge, "temp");
+                this.loopMap.put(backEdge, l);
+                l.nodesInLoop.add(succ);
+                succ.loopEdge = backEdge;
+                tagLHead(bb, succ);    
+            } else if(succ.loopEdge == null) {
                 
             } else {
-                BasicBlock h = this.id2bb.get(succ.loopHeader);
+                BasicBlock h = this.id2bb.get(succ.loopEdge.to.id);
                 if (h.dfspPos > 0) {
                     tagLHead(bb, h);
                 } else {
@@ -222,21 +166,21 @@ public class ControlFlowGraph {
         }
 
         bb.dfspPos = 0;
-        return this.id2bb.get(bb.loopHeader);
+        
+        return bb.loopEdge == null ? null : this.id2bb.get(bb.loopEdge.to.id);
     }
 
     private void tagLHead(BasicBlock bb, BasicBlock head) {
         if (bb.equals(head) || head == null) { return; }
         BasicBlock temp1 = bb;
         BasicBlock temp2 = head;
-        while (temp1.loopHeader != null) {
-            BasicBlock ih = this.id2bb.get(temp1.loopHeader);
+        while (temp1.loopEdge != null) {
+            BasicBlock ih = this.id2bb.get(temp1.loopEdge.to.id);
             if (ih.equals(temp2)) { return; }
             if (ih.dfspPos < temp2.dfspPos) {
-                temp1.loopHeader = temp2.id;
-                Loop l = this.loopMap.get(temp2);
+                temp1.loopEdge = temp2.loopEdge;
+                Loop l = this.loopMap.get(temp2.loopEdge);
                 l.nodesInLoop.add(temp1);
-                l.tail = temp1;
                 temp1 = temp2;
                 temp2 = ih;
             } else {
@@ -244,14 +188,15 @@ public class ControlFlowGraph {
             }
         }
 
-        temp1.loopHeader = temp2.id;
-        this.loopMap.get(temp2).nodesInLoop.add(temp1);
+        temp1.loopEdge = temp2.loopEdge;
+        this.loopMap.get(temp2.loopEdge).nodesInLoop.add(temp1);
     }
 
     private void loopTypes() {
-        for (BasicBlock h : this.loopMap.keySet()) {
-            Loop l = this.loopMap.get(h);
-            BasicBlock t = l.tail;
+        for (Edge e : this.loopMap.keySet()) {
+            Loop l = this.loopMap.get(e);
+            BasicBlock h = l.backEdge.to;
+            BasicBlock t = l.backEdge.from;
             int tExits = t.successors.size();
             int hExits = h.successors.size();
             if (tExits == 2) {
@@ -338,11 +283,11 @@ public class ControlFlowGraph {
         //     i++;
         // }
 
-        if (this.loopHeaders != null) {
-            for (BasicBlock bbLoopHeader : this.loopHeaders) {
+        if (this.loopBackEdges != null) {
+            for (Edge bbLoopEdge : this.loopBackEdges) {
                 System.out.println("-----loop-------");
-                System.out.println(this.loopMap.get(bbLoopHeader).loopType);
-                for (BasicBlock bb : this.loopMap.get(bbLoopHeader).nodesInLoop) {
+                System.out.println(this.loopMap.get(bbLoopEdge).loopType);
+                for (BasicBlock bb : this.loopMap.get(bbLoopEdge).nodesInLoop) {
                     System.out.println(bb.id);
                 }
                 System.out.println("----------------");

@@ -5,13 +5,12 @@ import java.util.List;
 
 public class Loop {
     public String loopType;
-    public BasicBlock header;
-    public BasicBlock tail;
+    public Edge backEdge;
     public List<BasicBlock> nodesInLoop;
 
-    public Loop(BasicBlock h, String type) {
+    public Loop(Edge e, String type) {
         this.loopType = type;
-        this.header = h;
+        this.backEdge = e;
         this.nodesInLoop = new ArrayList<>();
     }
 

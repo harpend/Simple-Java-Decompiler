@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import parser.Instruction;
 
@@ -28,10 +29,9 @@ public class ControlFlowGraph {
     private BasicBlock prevBB = null;
     private Map<Integer, BitSet> dominaterMap;
     private Stack<BasicBlock> dfsStack;
-    private HashSet<BasicBlock> visited;
-    private HashSet<Edge> loopBackEdges;
-    private HashMap<Edge, Loop> loopMap;
-    private Integer scID;
+    private HashSet<Integer> visited;
+    private UnionFind LP;
+    private Map<Integer, Integer> loopParent = new HashMap<>(); 
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -42,9 +42,8 @@ public class ControlFlowGraph {
         this.fall = new HashSet<Integer>();
         this.i2bb = new HashMap<Integer, BasicBlock>();
         this.id2bb = new HashMap<>();
-        this.loopBackEdges = new HashSet<>();
-        this.loopMap = new HashMap<>();
-        this.scID = -1;
+        this.loopParent = new HashMap<>();
+        this.LP = new UnionFind();
     }
 
     public Instruction addInstruction(Instruction i, boolean cfChange) {
@@ -76,9 +75,8 @@ public class ControlFlowGraph {
         this.visited = new HashSet<>(this.bbList.size());
         this.dfsStack = new Stack<>();
         this.bbListPostorder = new ArrayList<>();
-        depthFirstSearch(this.head, 1);
+        computeDominators();
         loopTypes();
-        // computeDominators();
     }
 
     private void generateBBS() {
@@ -136,76 +134,14 @@ public class ControlFlowGraph {
         }
     }
 
-    private BasicBlock depthFirstSearch(BasicBlock bb, int dfspPos) {
-        this.visited.add(bb);
-        bb.dfspPos = dfspPos;
-        for (BasicBlock succ : bb.successors) {
-            if (!this.visited.contains(succ)) {
-                BasicBlock nh = depthFirstSearch(succ, dfspPos + 1);
-                tagLHead(bb, nh);
-            } else if (succ.dfspPos > 0) {
-                Edge backEdge = new Edge(succ, bb);
-                this.loopBackEdges.add(backEdge);
-                Loop l = new Loop(backEdge, "temp");
-                this.loopMap.put(backEdge, l);
-                l.nodesInLoop.add(succ);
-                succ.loopEdge = backEdge;
-                tagLHead(bb, succ);    
-            } else if(succ.loopEdge == null) {
-                
-            } else {
-                BasicBlock h = this.id2bb.get(succ.loopEdge.to.id);
-                if (h.dfspPos > 0) {
-                    tagLHead(bb, h);
-                } else {
-                    // re-entry
-                    System.out.println("reentry unsupported");
-                    System.exit(1);
-                }
-            }
-        }
-
-        bb.dfspPos = 0;
+    private void findLoops(BasicBlock head) {
         
-        return bb.loopEdge == null ? null : this.id2bb.get(bb.loopEdge.to.id);
     }
-
-    private void tagLHead(BasicBlock bb, BasicBlock head) {
-        if (bb.equals(head) || head == null) { return; }
-        BasicBlock temp1 = bb;
-        BasicBlock temp2 = head;
-        while (temp1.loopEdge != null) {
-            BasicBlock ih = this.id2bb.get(temp1.loopEdge.to.id);
-            if (ih.equals(temp2)) { return; }
-            if (ih.dfspPos < temp2.dfspPos) {
-                temp1.loopEdge = temp2.loopEdge;
-                Loop l = this.loopMap.get(temp2.loopEdge);
-                l.nodesInLoop.add(temp1);
-                temp1 = temp2;
-                temp2 = ih;
-            } else {
-                temp1 = ih;
-            }
-        }
-
-        temp1.loopEdge = temp2.loopEdge;
-        this.loopMap.get(temp2.loopEdge).nodesInLoop.add(temp1);
-    }
-
     private void loopTypes() {
         for (Edge e : this.loopMap.keySet()) {
             Loop l = this.loopMap.get(e);
             BasicBlock h = l.backEdge.to;
             BasicBlock t = l.backEdge.from;
-            l.stringify();
-            System.out.println(h.id + " " + t.id);
-            if (h == t) {
-                l = new Loop(l.backEdge, "post");
-                l.nodesInLoop.add(t);
-                h.instructions.addFirst(new Instruction(0, "do", 0, 0));
-                t.instructions.addLast(new Instruction(0, "do_end", 0, 0));
-                continue;
-            }
 
             int tExits = t.successors.size();
             int hExits = h.successors.size();
@@ -285,25 +221,25 @@ public class ControlFlowGraph {
     }
 
     public void stringify() {
-        // System.out.println("Insert method name:");
-        // int i = 0;
-        // for (BasicBlock bb : this.bbList) {
-        //     System.out.println("BB " + i + ":");
-        //     bb.stringify();
-        //     i++;
-        // }
+        System.out.println("Insert method name:");
+        int i = 0;
+        for (BasicBlock bb : this.bbList) {
+            System.out.println("BB " + i + ":");
+            bb.stringify();
+            i++;
+        }
 
-        // if (this.loopBackEdges != null) {
-        //     for (Edge bbLoopEdge : this.loopBackEdges) {
-        //         System.out.println("-----loop-------");
-        //         System.out.println(this.loopMap.get(bbLoopEdge).loopType);
-        //         for (BasicBlock bb : this.loopMap.get(bbLoopEdge).nodesInLoop) {
-        //             System.out.println(bb.id);
-        //         }
-        //         System.out.println("----------------");
-        //     }
+        if (this.loopBackEdges != null) {
+            for (Edge bbLoopEdge : this.loopBackEdges) {
+                System.out.println("-----loop-------");
+                System.out.println(this.loopMap.get(bbLoopEdge).loopType);
+                for (BasicBlock bb : this.loopMap.get(bbLoopEdge).nodesInLoop) {
+                    System.out.println(bb.id);
+                }
+                System.out.println("----------------");
+            }
 
-        // }
+        }
     }
 
     public List<Instruction> getInstructions() {

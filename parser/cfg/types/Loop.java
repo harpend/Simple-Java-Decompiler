@@ -1,4 +1,4 @@
-package parser.cfg;
+package parser.cfg.types;
 
 import java.util.ArrayList;
 import java.util.List;

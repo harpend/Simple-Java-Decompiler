@@ -1,4 +1,4 @@
-package parser.cfg;
+package parser.cfg.types;
 
 public class Edge {
     // To, From

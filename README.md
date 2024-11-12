@@ -11,7 +11,7 @@ This decompiler is written entirely from scratch. For most instructions the proc
 compile with: 
 
 `
-javac main.java parser/*.java parser/ast/*.java parser/cfg/*.java
+javac main.java parser/*.java parser/ast/*.java parser/cfg/*.java parser/cfg/types/*.java
 `
 
 run with:

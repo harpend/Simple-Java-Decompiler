@@ -10,12 +10,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import parser.Instruction;
+import parser.cfg.types.BasicBlock;
+import parser.cfg.types.Edge;
+import parser.cfg.types.Loop;
+import parser.cfg.types.UnionFind;
 
 public class ControlFlowGraph {
     private Dictionary<String, Object> method;
     private List<Instruction> instructions;
     public List<BasicBlock> bbList;
     public List<BasicBlock> bbListPostorder;
+    public List<BasicBlock> bbListPreorder;
+    public List<BasicBlock> bbListReversePostorder;
     public HashMap<Integer, BasicBlock> i2bb;
     public HashMap<Integer, BasicBlock> id2bb;
     private HashSet<Integer> terminators;
@@ -30,8 +36,13 @@ public class ControlFlowGraph {
     private Map<Integer, BitSet> dominaterMap;
     private Stack<BasicBlock> dfsStack;
     private HashSet<Integer> visited;
+    private HashSet<Edge> backEdges;
     private UnionFind LP;
     private Map<Integer, Integer> loopParent = new HashMap<>(); 
+    private Map<BasicBlock, Integer> lowLink;
+    private Map<BasicBlock, Integer> number;
+    private Stack<BasicBlock> tStack;
+    private List<HashSet<BasicBlock>> sccList;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -44,6 +55,10 @@ public class ControlFlowGraph {
         this.id2bb = new HashMap<>();
         this.loopParent = new HashMap<>();
         this.LP = new UnionFind();
+        this.lowLink = new HashMap<>();
+        this.number = new HashMap<>();
+        this.tStack = new Stack<>();
+        this.sccList = new ArrayList<>();
     }
 
     public Instruction addInstruction(Instruction i, boolean cfChange) {
@@ -73,9 +88,12 @@ public class ControlFlowGraph {
         this.head = this.bbList.getFirst();
         linkBBS(); 
         this.visited = new HashSet<>(this.bbList.size());
-        this.dfsStack = new Stack<>();
         this.bbListPostorder = new ArrayList<>();
+        this.bbListPreorder = new ArrayList<>();
+        this.backEdges = new HashSet<>();
         computeDominators();
+        DFS(this.head);
+        this.bbListReversePostorder = bbListPostorder.reversed();
         loopTypes();
     }
 
@@ -134,8 +152,39 @@ public class ControlFlowGraph {
         }
     }
 
-    private void findLoops(BasicBlock head) {
-        
+    private void DFS(BasicBlock bb) {
+        this.visited.add(bb.id);
+        LP.parent.add(bb);
+        this.number.put(bb, this.visited.size());
+        this.lowLink.put(bb, this.visited.size());
+        this.tStack.push(bb);
+        for (BasicBlock succ : bb.successors) {
+            if (!this.visited.contains(succ.id)) {
+                DFS(succ);
+            } else if (this.number.get(succ) < this.number.get(bb)) {
+                if (this.tStack.contains(succ)) {
+                    Integer minLL = Math.min(this.lowLink.get(bb), this.number.get(succ));
+                    this.lowLink.put(bb, minLL);
+                }
+            }
+            
+        }
+
+        if (this.lowLink.get(bb).equals(this.number.get(bb))) {
+            HashSet<BasicBlock> scc = new HashSet<>();
+            while (this.number.get(this.tStack.peek()) >= this.number.get(bb) ) {
+                scc.add(this.tStack.pop());
+            }
+
+            this.sccList.add(scc);
+        }
+
+        this.bbListPostorder.add(bb);
+    }
+
+    private void findLoop(BasicBlock potentialHeader) {
+        HashSet loopBody = new HashSet<>();
+
     }
     private void loopTypes() {
         for (Edge e : this.loopMap.keySet()) {

@@ -93,8 +93,18 @@ public class ControlFlowGraph {
         this.backEdges = new HashSet<>();
         computeDominators();
         DFS(this.head);
+        for (HashSet<BasicBlock> hs : this.sccList) {
+            System.out.println("--------------");
+            for (BasicBlock bb : hs) {
+                System.out.println(bb.id);
+            }
+        }
+        // if (this.bbListPreorder.size() != this.bbList.size()) {
+        //     System.out.println("Not implemented iterating through all nodes");
+        //     System.exit(1);
+        // }
         this.bbListReversePostorder = bbListPostorder.reversed();
-        loopTypes();
+        // loopTypes();
     }
 
     private void generateBBS() {
@@ -152,15 +162,20 @@ public class ControlFlowGraph {
         }
     }
 
+    private int index = 0;
     private void DFS(BasicBlock bb) {
         this.visited.add(bb.id);
         LP.parent.add(bb);
-        this.number.put(bb, this.visited.size());
-        this.lowLink.put(bb, this.visited.size());
+        this.number.put(bb, this.index);
+        this.lowLink.put(bb, this.index);
+        index++;
         this.tStack.push(bb);
+        System.out.println(bb.id);
         for (BasicBlock succ : bb.successors) {
             if (!this.visited.contains(succ.id)) {
                 DFS(succ);
+                Integer minLL = Math.min(this.lowLink.get(bb), this.lowLink.get(succ));
+                this.lowLink.put(bb, minLL);
             } else if (this.number.get(succ) < this.number.get(bb)) {
                 if (this.tStack.contains(succ)) {
                     Integer minLL = Math.min(this.lowLink.get(bb), this.number.get(succ));
@@ -172,7 +187,7 @@ public class ControlFlowGraph {
 
         if (this.lowLink.get(bb).equals(this.number.get(bb))) {
             HashSet<BasicBlock> scc = new HashSet<>();
-            while (this.number.get(this.tStack.peek()) >= this.number.get(bb) ) {
+            while (!tStack.empty() && this.number.get(this.tStack.peek()) >= this.number.get(bb) ) {
                 scc.add(this.tStack.pop());
             }
 
@@ -186,50 +201,50 @@ public class ControlFlowGraph {
         HashSet loopBody = new HashSet<>();
 
     }
-    private void loopTypes() {
-        for (Edge e : this.loopMap.keySet()) {
-            Loop l = this.loopMap.get(e);
-            BasicBlock h = l.backEdge.to;
-            BasicBlock t = l.backEdge.from;
+    // private void loopTypes() {
+    //     for (Edge e : this.loopMap.keySet()) {
+    //         Loop l = this.loopMap.get(e);
+    //         BasicBlock h = l.backEdge.to;
+    //         BasicBlock t = l.backEdge.from;
 
-            int tExits = t.successors.size();
-            int hExits = h.successors.size();
-            if (tExits == 2) {
-                if (hExits == 2) {
-                    boolean inLoop = true;
-                    for (BasicBlock succ : h.successors) {
-                        if (!l.nodesInLoop.contains(succ)) {
-                            inLoop = false;
-                        }
-                    }
+    //         int tExits = t.successors.size();
+    //         int hExits = h.successors.size();
+    //         if (tExits == 2) {
+    //             if (hExits == 2) {
+    //                 boolean inLoop = true;
+    //                 for (BasicBlock succ : h.successors) {
+    //                     if (!l.nodesInLoop.contains(succ)) {
+    //                         inLoop = false;
+    //                     }
+    //                 }
                     
-                    if (inLoop) {
-                        l.loopType = "post";
-                        h.instructions.addFirst(new Instruction(0, "do", 0, 0));
-                        t.instructions.addLast(new Instruction(0, "do_end", 0, 0));
-                      } else {
-                        l.loopType = "pre";
-                        h.instructions.addFirst(new Instruction(0, "while", 0, 0));
-                        t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
-                    }
-                } else {
-                    l.loopType = "post";
-                    h.instructions.addFirst(new Instruction(0, "do", 0, 0));
-                    t.instructions.addLast(new Instruction(0, "do_end", 0, 0));
-                }
-            } else {
-                if (hExits == 2) {
-                    l.loopType = "pre";
-                    h.instructions.addFirst(new Instruction(0, "while", 0, 0));
-                    t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
-                } else {
-                    l.loopType = "endless";
-                    System.out.println("unexpected endless loop");
-                    System.exit(1);
-                }
-            }
-        }
-    }
+    //                 if (inLoop) {
+    //                     l.loopType = "post";
+    //                     h.instructions.addFirst(new Instruction(0, "do", 0, 0));
+    //                     t.instructions.addLast(new Instruction(0, "do_end", 0, 0));
+    //                   } else {
+    //                     l.loopType = "pre";
+    //                     h.instructions.addFirst(new Instruction(0, "while", 0, 0));
+    //                     t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
+    //                 }
+    //             } else {
+    //                 l.loopType = "post";
+    //                 h.instructions.addFirst(new Instruction(0, "do", 0, 0));
+    //                 t.instructions.addLast(new Instruction(0, "do_end", 0, 0));
+    //             }
+    //         } else {
+    //             if (hExits == 2) {
+    //                 l.loopType = "pre";
+    //                 h.instructions.addFirst(new Instruction(0, "while", 0, 0));
+    //                 t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
+    //             } else {
+    //                 l.loopType = "endless";
+    //                 System.out.println("unexpected endless loop");
+    //                 System.exit(1);
+    //             }
+    //         }
+    //     }
+    // }
 
     private void computeDominators() {
         int i = 0;
@@ -263,10 +278,6 @@ public class ControlFlowGraph {
                 }
             }
         } while (changed);
-
-        for (BasicBlock bb : this.bbList) {
-            System.out.println(bb.dominators);
-        }
     }
 
     public void stringify() {
@@ -278,17 +289,17 @@ public class ControlFlowGraph {
             i++;
         }
 
-        if (this.loopBackEdges != null) {
-            for (Edge bbLoopEdge : this.loopBackEdges) {
-                System.out.println("-----loop-------");
-                System.out.println(this.loopMap.get(bbLoopEdge).loopType);
-                for (BasicBlock bb : this.loopMap.get(bbLoopEdge).nodesInLoop) {
-                    System.out.println(bb.id);
-                }
-                System.out.println("----------------");
-            }
+        // if (this.loopBackEdges != null) {
+        //     for (Edge bbLoopEdge : this.loopBackEdges) {
+        //         System.out.println("-----loop-------");
+        //         System.out.println(this.loopMap.get(bbLoopEdge).loopType);
+        //         for (BasicBlock bb : this.loopMap.get(bbLoopEdge).nodesInLoop) {
+        //             System.out.println(bb.id);
+        //         }
+        //         System.out.println("----------------");
+        //     }
 
-        }
+        // }
     }
 
     public List<Instruction> getInstructions() {

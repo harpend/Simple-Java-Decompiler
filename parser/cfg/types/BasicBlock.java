@@ -18,6 +18,8 @@ public class BasicBlock {
     public BitSet dominators;
     public int dfspPos;
     public Edge loopEdge;
+    public int header;
+    public String type;
 
     public BasicBlock(Instruction l, int id) {
         this.leader = l;
@@ -28,6 +30,8 @@ public class BasicBlock {
         this.dfspPos = 0;
         this.loopEdge = null;
         this.id = id;
+        this.header = 0;
+        this.type = "Non-Header";
     }
 
     public void addInstruction(Instruction i) {

@@ -36,13 +36,15 @@ public class ControlFlowGraph {
     private Map<Integer, BitSet> dominaterMap;
     private Stack<BasicBlock> dfsStack;
     private HashSet<Integer> visited;
-    private HashSet<Edge> backEdges;
+    private Map<BasicBlock, HashSet<BasicBlock>> backEdges;
+    private Map<BasicBlock, HashSet<BasicBlock>> otherEdges;
     private UnionFind LP;
     private Map<Integer, Integer> loopParent = new HashMap<>(); 
     private Map<BasicBlock, Integer> lowLink;
     private Map<BasicBlock, Integer> number;
     private Stack<BasicBlock> tStack;
     private List<HashSet<BasicBlock>> sccList;
+    private List<Integer> lastDesc;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -59,6 +61,9 @@ public class ControlFlowGraph {
         this.number = new HashMap<>();
         this.tStack = new Stack<>();
         this.sccList = new ArrayList<>();
+        this.lastDesc = new ArrayList<>();
+        this.backEdges = new HashMap<>();
+        this.otherEdges = new HashMap<>();
     }
 
     public Instruction addInstruction(Instruction i, boolean cfChange) {
@@ -90,19 +95,11 @@ public class ControlFlowGraph {
         this.visited = new HashSet<>(this.bbList.size());
         this.bbListPostorder = new ArrayList<>();
         this.bbListPreorder = new ArrayList<>();
-        this.backEdges = new HashSet<>();
         computeDominators();
         DFS(this.head);
-        for (HashSet<BasicBlock> hs : this.sccList) {
-            System.out.println("--------------");
-            for (BasicBlock bb : hs) {
-                System.out.println(bb.id);
-            }
-        }
-        // if (this.bbListPreorder.size() != this.bbList.size()) {
-        //     System.out.println("Not implemented iterating through all nodes");
-        //     System.exit(1);
-        // }
+        analyseLoops();
+        
+        System.out.println("POLength: " + this.bbListPostorder.size());
         this.bbListReversePostorder = bbListPostorder.reversed();
         // loopTypes();
     }
@@ -165,42 +162,48 @@ public class ControlFlowGraph {
     private int index = 0;
     private void DFS(BasicBlock bb) {
         this.visited.add(bb.id);
-        LP.parent.add(bb);
         this.number.put(bb, this.index);
-        this.lowLink.put(bb, this.index);
+        this.lastDesc.add(bb.id);
+        int lastVar = this.index;
         index++;
-        this.tStack.push(bb);
-        System.out.println(bb.id);
         for (BasicBlock succ : bb.successors) {
             if (!this.visited.contains(succ.id)) {
                 DFS(succ);
-                Integer minLL = Math.min(this.lowLink.get(bb), this.lowLink.get(succ));
-                this.lowLink.put(bb, minLL);
-            } else if (this.number.get(succ) < this.number.get(bb)) {
-                if (this.tStack.contains(succ)) {
-                    Integer minLL = Math.min(this.lowLink.get(bb), this.number.get(succ));
-                    this.lowLink.put(bb, minLL);
+                lastVar = Math.max(lastVar, this.number.get(succ));
+            } 
+        }
+
+        this.lastDesc.set(this.number.get(bb), lastVar);
+    }
+
+    private void analyseLoops() {
+        for (int i = 0; i < this.bbList.size(); i++) {
+            BasicBlock w = this.bbListPreorder.get(i);
+            this.backEdges.put(w, new HashSet<>());
+            for (BasicBlock v : w.predecessors) {
+                if (isAncestor(w, v)) {
+                    this.backEdges.get(w).add(v);
+                } else {
+                    this.otherEdges.get(w).add(v);
                 }
             }
-            
-        }
+        } 
 
-        if (this.lowLink.get(bb).equals(this.number.get(bb))) {
-            HashSet<BasicBlock> scc = new HashSet<>();
-            while (!tStack.empty() && this.number.get(this.tStack.peek()) >= this.number.get(bb) ) {
-                scc.add(this.tStack.pop());
+        
+        for (BasicBlock w : this.bbListPreorder) {
+            for (BasicBlock v : this.backEdges.get(w)) {
+                if (!v.equals(w)) {
+
+                }
             }
-
-            this.sccList.add(scc);
         }
-
-        this.bbListPostorder.add(bb);
     }
 
-    private void findLoop(BasicBlock potentialHeader) {
-        HashSet loopBody = new HashSet<>();
-
+    private boolean isAncestor(BasicBlock to, BasicBlock from) {
+        int toPO = this.number.get(to);
+        return ((toPO <= this.number.get(from)) && (this.number.get(from) <= this.lastDesc.get(toPO)));
     }
+
     // private void loopTypes() {
     //     for (Edge e : this.loopMap.keySet()) {
     //         Loop l = this.loopMap.get(e);

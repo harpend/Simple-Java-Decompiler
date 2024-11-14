@@ -13,7 +13,7 @@ import parser.Instruction;
 import parser.cfg.types.BasicBlock;
 import parser.cfg.types.Edge;
 import parser.cfg.types.Loop;
-import parser.cfg.types.UnionFind;
+import parser.cfg.types.UnionFindNode;
 
 public class ControlFlowGraph {
     private Dictionary<String, Object> method;
@@ -38,7 +38,6 @@ public class ControlFlowGraph {
     private HashSet<Integer> visited;
     private Map<BasicBlock, HashSet<BasicBlock>> backEdges;
     private Map<BasicBlock, HashSet<BasicBlock>> otherEdges;
-    private UnionFind LP;
     private Map<Integer, Integer> loopParent = new HashMap<>(); 
     private Map<BasicBlock, Integer> lowLink;
     private Map<BasicBlock, Integer> number;
@@ -56,7 +55,6 @@ public class ControlFlowGraph {
         this.i2bb = new HashMap<Integer, BasicBlock>();
         this.id2bb = new HashMap<>();
         this.loopParent = new HashMap<>();
-        this.LP = new UnionFind();
         this.lowLink = new HashMap<>();
         this.number = new HashMap<>();
         this.tStack = new Stack<>();
@@ -189,11 +187,12 @@ public class ControlFlowGraph {
             }
         } 
 
-        
-        for (BasicBlock w : this.bbListPreorder) {
+        List<UnionFindNode> P = new ArrayList<>();
+        for (BasicBlock w : this.bbListPreorder.reversed()) {
             for (BasicBlock v : this.backEdges.get(w)) {
                 if (!v.equals(w)) {
-
+                    UnionFindNode ufn = new UnionFindNode(v, this.number.get(v));
+                    P.add(ufn.findSet());
                 }
             }
         }

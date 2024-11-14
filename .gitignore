@@ -27,3 +27,7 @@ IntervalNode.class
 IntervalGraph.class
 
 Loop.class
+
+UnionFindNode.class
+
+Edge.class

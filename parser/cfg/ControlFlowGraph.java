@@ -98,13 +98,11 @@ public class ControlFlowGraph {
         this.bbListPostorder = new ArrayList<>();
         this.bbListPreorder = new ArrayList<>();
         computeDominators();
-        DFS(this.head);
+        DFS(this.head, 0);
         analyseLoops();
         for (Loop l : this.loopList) {
             l.stringify();
         }
-        System.out.println("POLength: " + this.bbListPreorder.size());
-        this.bbListReversePostorder = bbListPostorder.reversed();
         // loopTypes();
     }
 
@@ -163,22 +161,20 @@ public class ControlFlowGraph {
         }
     }
 
-    private int index = 0;
-    private void DFS(BasicBlock bb) {
+    private int DFS(BasicBlock bb, int index) {
         this.visited.add(bb.id);
-        this.number.put(bb, this.index);
+        this.number.put(bb, index);
         this.bbListPreorder.add(bb);
-        this.lastDesc.add(bb.id);
-        int lastVar = this.index;
-        index++;
+        this.lastDesc.add(index);
+        int lastVar =index;
         for (BasicBlock succ : bb.successors) {
             if (!this.visited.contains(succ.id)) {
-                DFS(succ);
-                lastVar = Math.max(lastVar, this.number.get(succ));
+                lastVar = DFS(succ, index+1);
             } 
         }
 
         this.lastDesc.set(this.number.get(bb), lastVar);
+        return lastVar;
     }
 
     // Havlak-Tarjan
@@ -198,7 +194,6 @@ public class ControlFlowGraph {
             }
         } 
 
-        System.out.println(this.backEdges);
         for (int i = this.bbListPreorder.size() - 1; i >= 0; i--) {
             BasicBlock w = this.bbListPreorder.get(i);
             List<UnionFindNode> P = new ArrayList<>();
@@ -226,22 +221,24 @@ public class ControlFlowGraph {
                 }
             }
 
-            Loop l = new Loop(w, "temp");
-            if (!w.type.equals("irreducible")) {
-                l.isReducible = true;
-            }
-
-            for (UnionFindNode x : P) {
-                UnionFindNode ufn = LP.get(this.number.get(w));
-                ufn.union(x);
-                if (ufn.getLoop() != null) {
-                    ufn.getLoop().parentLoop = l;
-                } else {
-                    l.nodesInLoop.add(x.getBasicBlock());
+            if (!P.isEmpty()) {
+                Loop l = new Loop(w, "temp");
+                if (!w.type.equals("irreducible")) {
+                    l.isReducible = true;
                 }
+    
+                for (UnionFindNode x : P) {
+                    UnionFindNode ufn = LP.get(this.number.get(w));
+                    ufn.union(x);
+                    if (ufn.getLoop() != null) {
+                        ufn.getLoop().parentLoop = l;
+                    } else {
+                        l.nodesInLoop.add(x.getBasicBlock());
+                    }
+                }
+    
+                this.loopList.add(l);
             }
-
-            this.loopList.add(l);
         }
     }
 
@@ -330,25 +327,14 @@ public class ControlFlowGraph {
     }
 
     public void stringify() {
-        System.out.println("Insert method name:");
-        int i = 0;
-        for (BasicBlock bb : this.bbList) {
-            System.out.println("BB " + i + ":");
-            bb.stringify();
-            i++;
-        }
-
-        // if (this.loopBackEdges != null) {
-        //     for (Edge bbLoopEdge : this.loopBackEdges) {
-        //         System.out.println("-----loop-------");
-        //         System.out.println(this.loopMap.get(bbLoopEdge).loopType);
-        //         for (BasicBlock bb : this.loopMap.get(bbLoopEdge).nodesInLoop) {
-        //             System.out.println(bb.id);
-        //         }
-        //         System.out.println("----------------");
-        //     }
-
+        // System.out.println("Insert method name:");
+        // int i = 0;
+        // for (BasicBlock bb : this.bbList) {
+        //     System.out.println("BB " + i + ":");
+        //     bb.stringify();
+        //     i++;
         // }
+
     }
 
     public List<Instruction> getInstructions() {

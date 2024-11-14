@@ -1,19 +1,18 @@
 package parser.cfg.types;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 
 public class Loop {
     public String loopType;
     public BasicBlock header;
-    public List<BasicBlock> nodesInLoop;
+    public HashSet<BasicBlock> nodesInLoop;
     public boolean isReducible = false;
     public Loop parentLoop = null;
 
     public Loop(BasicBlock header, String type) {
         this.loopType = type;
         this.header = header;
-        this.nodesInLoop = new ArrayList<>();
+        this.nodesInLoop = new HashSet<>();
         nodesInLoop.add(header);
     }
 

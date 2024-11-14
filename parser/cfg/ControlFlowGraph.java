@@ -47,6 +47,7 @@ public class ControlFlowGraph {
     private List<HashSet<BasicBlock>> sccList;
     private List<Integer> lastDesc;
     private List<Loop> loopList;
+    private List<UnionFindNode> LP;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -103,7 +104,7 @@ public class ControlFlowGraph {
         for (Loop l : this.loopList) {
             l.stringify();
         }
-        // loopTypes();
+        loopTypes();
     }
 
     private void generateBBS() {
@@ -179,7 +180,7 @@ public class ControlFlowGraph {
 
     // Havlak-Tarjan
     private void analyseLoops() {
-        List<UnionFindNode> LP = new ArrayList<>();
+        this.LP = new ArrayList<>();
         for (int i = 0; i < this.bbList.size(); i++) {
             BasicBlock w = this.bbListPreorder.get(i);
             this.backEdges.put(w, new HashSet<>());
@@ -202,6 +203,9 @@ public class ControlFlowGraph {
                     P.add(LP.get(this.number.get(v)).findSet());
                 } else {
                     w.type = "self";
+                    Loop loop = new Loop(w, "temp");
+                    this.loopList.add(loop);
+                    LP.get(i).setLoop(loop);
                 }
             }
 
@@ -234,6 +238,11 @@ public class ControlFlowGraph {
                     if (x.getLoop() != null) {
                         ufn.getLoop().parentLoop = l;
                     } else {
+                        BasicBlock bb = x.getBasicBlock();
+                        if (this.backEdges.get(w).contains(bb)) {
+                            l.terminator = bb;
+                        }
+
                         l.nodesInLoop.add(x.getBasicBlock());
                     }
                 }
@@ -248,50 +257,50 @@ public class ControlFlowGraph {
         return ((toPO <= this.number.get(from)) && (this.number.get(from) <= this.lastDesc.get(toPO)));
     }
 
-    // private void loopTypes() {
-    //     for (Edge e : this.loopMap.keySet()) {
-    //         Loop l = this.loopMap.get(e);
-    //         BasicBlock h = l.backEdge.to;
-    //         BasicBlock t = l.backEdge.from;
-
-    //         int tExits = t.successors.size();
-    //         int hExits = h.successors.size();
-    //         if (tExits == 2) {
-    //             if (hExits == 2) {
-    //                 boolean inLoop = true;
-    //                 for (BasicBlock succ : h.successors) {
-    //                     if (!l.nodesInLoop.contains(succ)) {
-    //                         inLoop = false;
-    //                     }
-    //                 }
+    private void loopTypes() {
+        for (Loop l : this.loopList) {
+            int tExits = l.terminator.successors.size();
+            int hExits = l.header.successors.size();
+            if (tExits == 2) {
+                if (hExits == 2) {
+                    boolean inLoop = true;
+                    if (!l.header.type.equals("self")) {
+                        for (BasicBlock succ : l.header.successors) {
+                            if (!l.nodesInLoop.contains(succ) && !l.header.equals(this.LP.get(this.number.get(succ)).findSet().getBasicBlock())) {
+                                System.out.println(this.number.get(l.header));
+                                inLoop = false;
+                            }
+                        }
+                    }
                     
-    //                 if (inLoop) {
-    //                     l.loopType = "post";
-    //                     h.instructions.addFirst(new Instruction(0, "do", 0, 0));
-    //                     t.instructions.addLast(new Instruction(0, "do_end", 0, 0));
-    //                   } else {
-    //                     l.loopType = "pre";
-    //                     h.instructions.addFirst(new Instruction(0, "while", 0, 0));
-    //                     t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
-    //                 }
-    //             } else {
-    //                 l.loopType = "post";
-    //                 h.instructions.addFirst(new Instruction(0, "do", 0, 0));
-    //                 t.instructions.addLast(new Instruction(0, "do_end", 0, 0));
-    //             }
-    //         } else {
-    //             if (hExits == 2) {
-    //                 l.loopType = "pre";
-    //                 h.instructions.addFirst(new Instruction(0, "while", 0, 0));
-    //                 t.instructions.addLast(new Instruction(0, "while_end", 0, 0));
-    //             } else {
-    //                 l.loopType = "endless";
-    //                 System.out.println("unexpected endless loop");
-    //                 System.exit(1);
-    //             }
-    //         }
-    //     }
-    // }
+                    if (inLoop) {
+                        l.loopType = "post";
+                        l.header.instructions.addFirst(new Instruction(0, "do", 0, 0));
+                        l.terminator.instructions.addLast(new Instruction(0, "do_end", 0, 0));
+                      } else {
+                        System.out.println("check");
+                        l.loopType = "pre";
+                        l.header.instructions.addFirst(new Instruction(0, "while", 0, 0));
+                        l.terminator.instructions.addLast(new Instruction(0, "while_end", 0, 0));
+                    }
+                } else {
+                    l.loopType = "post";
+                    l.header.instructions.addFirst(new Instruction(0, "do", 0, 0));
+                    l.terminator.instructions.addLast(new Instruction(0, "do_end", 0, 0));
+                }
+            } else {
+                if (hExits == 2) {
+                    l.loopType = "pre";
+                    l.header.instructions.addFirst(new Instruction(0, "while", 0, 0));
+                    l.terminator.instructions.addLast(new Instruction(0, "while_end", 0, 0));
+                } else {
+                    l.loopType = "endless";
+                    System.out.println("unexpected endless loop");
+                    System.exit(1);
+                }
+            }
+        }
+    }
 
     private void computeDominators() {
         int i = 0;

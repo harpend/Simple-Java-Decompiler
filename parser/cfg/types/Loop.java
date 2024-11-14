@@ -5,6 +5,7 @@ import java.util.HashSet;
 public class Loop {
     public String loopType;
     public BasicBlock header;
+    public BasicBlock terminator;
     public HashSet<BasicBlock> nodesInLoop;
     public boolean isReducible = false;
     public Loop parentLoop = null;
@@ -14,6 +15,7 @@ public class Loop {
         this.header = header;
         this.nodesInLoop = new HashSet<>();
         nodesInLoop.add(header);
+        this.terminator = header;
     }
 
     public void stringify() {

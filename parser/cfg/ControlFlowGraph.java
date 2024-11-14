@@ -199,7 +199,7 @@ public class ControlFlowGraph {
             List<UnionFindNode> P = new ArrayList<>();
             for (BasicBlock v : this.backEdges.get(w)) {
                 if (!v.equals(w)) {
-                    P.add(LP.get(i));
+                    P.add(LP.get(this.number.get(v)).findSet());
                 } else {
                     w.type = "self";
                 }
@@ -214,23 +214,24 @@ public class ControlFlowGraph {
                     if (!isAncestor(w, yp.getBasicBlock())) {
                         w.type = "irreducible";
                         this.otherEdges.get(w).add(yp.getBasicBlock());
-                    } else if (yp.getDfsNumber() != this.number.get(w) && !P.contains(yp)) {
+                    } else if (!this.number.get(yp.getBasicBlock()).equals(this.number.get(w)) && !P.contains(yp)) {
                         workList.add(yp);
                         P.add(yp);
                     }
                 }
             }
-
+            
             if (!P.isEmpty()) {
                 Loop l = new Loop(w, "temp");
                 if (!w.type.equals("irreducible")) {
                     l.isReducible = true;
                 }
     
+                LP.get(i).setLoop(l);
+                UnionFindNode ufn = LP.get(this.number.get(w));
                 for (UnionFindNode x : P) {
-                    UnionFindNode ufn = LP.get(this.number.get(w));
-                    ufn.union(x);
-                    if (ufn.getLoop() != null) {
+                    x.union(ufn);
+                    if (x.getLoop() != null) {
                         ufn.getLoop().parentLoop = l;
                     } else {
                         l.nodesInLoop.add(x.getBasicBlock());

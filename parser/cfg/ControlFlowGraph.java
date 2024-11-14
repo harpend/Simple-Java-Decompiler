@@ -5,8 +5,10 @@ import java.util.BitSet;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 import parser.Instruction;
@@ -44,6 +46,7 @@ public class ControlFlowGraph {
     private Stack<BasicBlock> tStack;
     private List<HashSet<BasicBlock>> sccList;
     private List<Integer> lastDesc;
+    private List<Loop> loopList;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -62,6 +65,7 @@ public class ControlFlowGraph {
         this.lastDesc = new ArrayList<>();
         this.backEdges = new HashMap<>();
         this.otherEdges = new HashMap<>();
+        this.loopList = new ArrayList<>();
     }
 
     public Instruction addInstruction(Instruction i, boolean cfChange) {
@@ -96,8 +100,10 @@ public class ControlFlowGraph {
         computeDominators();
         DFS(this.head);
         analyseLoops();
-        
-        System.out.println("POLength: " + this.bbListPostorder.size());
+        for (Loop l : this.loopList) {
+            l.stringify();
+        }
+        System.out.println("POLength: " + this.bbListPreorder.size());
         this.bbListReversePostorder = bbListPostorder.reversed();
         // loopTypes();
     }
@@ -161,6 +167,7 @@ public class ControlFlowGraph {
     private void DFS(BasicBlock bb) {
         this.visited.add(bb.id);
         this.number.put(bb, this.index);
+        this.bbListPreorder.add(bb);
         this.lastDesc.add(bb.id);
         int lastVar = this.index;
         index++;
@@ -174,10 +181,14 @@ public class ControlFlowGraph {
         this.lastDesc.set(this.number.get(bb), lastVar);
     }
 
+    // Havlak-Tarjan
     private void analyseLoops() {
+        List<UnionFindNode> LP = new ArrayList<>();
         for (int i = 0; i < this.bbList.size(); i++) {
             BasicBlock w = this.bbListPreorder.get(i);
             this.backEdges.put(w, new HashSet<>());
+            this.otherEdges.put(w, new HashSet<>());
+            LP.add(new UnionFindNode(w, i));
             for (BasicBlock v : w.predecessors) {
                 if (isAncestor(w, v)) {
                     this.backEdges.get(w).add(v);
@@ -187,14 +198,50 @@ public class ControlFlowGraph {
             }
         } 
 
-        List<UnionFindNode> P = new ArrayList<>();
-        for (BasicBlock w : this.bbListPreorder.reversed()) {
+        System.out.println(this.backEdges);
+        for (int i = this.bbListPreorder.size() - 1; i >= 0; i--) {
+            BasicBlock w = this.bbListPreorder.get(i);
+            List<UnionFindNode> P = new ArrayList<>();
             for (BasicBlock v : this.backEdges.get(w)) {
                 if (!v.equals(w)) {
-                    UnionFindNode ufn = new UnionFindNode(v, this.number.get(v));
-                    P.add(ufn.findSet());
+                    P.add(LP.get(i));
+                } else {
+                    w.type = "self";
                 }
             }
+
+            Queue<UnionFindNode> workList = new LinkedList<>();
+            workList.addAll(P);
+            while(!workList.isEmpty()) {
+                UnionFindNode ufn = workList.poll();
+                for (BasicBlock y : this.otherEdges.get(ufn.getBasicBlock())) {
+                    UnionFindNode yp = LP.get(this.number.get(y)).findSet();
+                    if (!isAncestor(w, yp.getBasicBlock())) {
+                        w.type = "irreducible";
+                        this.otherEdges.get(w).add(yp.getBasicBlock());
+                    } else if (yp.getDfsNumber() != this.number.get(w) && !P.contains(yp)) {
+                        workList.add(yp);
+                        P.add(yp);
+                    }
+                }
+            }
+
+            Loop l = new Loop(w, "temp");
+            if (!w.type.equals("irreducible")) {
+                l.isReducible = true;
+            }
+
+            for (UnionFindNode x : P) {
+                UnionFindNode ufn = LP.get(this.number.get(w));
+                ufn.union(x);
+                if (ufn.getLoop() != null) {
+                    ufn.getLoop().parentLoop = l;
+                } else {
+                    l.nodesInLoop.add(x.getBasicBlock());
+                }
+            }
+
+            this.loopList.add(l);
         }
     }
 

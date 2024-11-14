@@ -9,11 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
-import java.util.Stack;
 import parser.Instruction;
 import parser.cfg.types.BasicBlock;
-import parser.cfg.types.Edge;
 import parser.cfg.types.Loop;
 import parser.cfg.types.UnionFindNode;
 
@@ -31,20 +28,14 @@ public class ControlFlowGraph {
     private HashSet<Integer> fall;
     private boolean fallThrough = false;
     private BasicBlock head = null;
-    private BasicBlock fakeEnd = null;
     private BasicBlock curBB = null;
     private Instruction prevInstruction = null;
     private BasicBlock prevBB = null;
     private Map<Integer, BitSet> dominaterMap;
-    private Stack<BasicBlock> dfsStack;
     private HashSet<Integer> visited;
     private Map<BasicBlock, HashSet<BasicBlock>> backEdges;
     private Map<BasicBlock, HashSet<BasicBlock>> otherEdges;
-    private Map<Integer, Integer> loopParent = new HashMap<>(); 
-    private Map<BasicBlock, Integer> lowLink;
     private Map<BasicBlock, Integer> number;
-    private Stack<BasicBlock> tStack;
-    private List<HashSet<BasicBlock>> sccList;
     private List<Integer> lastDesc;
     private List<Loop> loopList;
     private List<UnionFindNode> LP;
@@ -58,11 +49,7 @@ public class ControlFlowGraph {
         this.fall = new HashSet<Integer>();
         this.i2bb = new HashMap<Integer, BasicBlock>();
         this.id2bb = new HashMap<>();
-        this.loopParent = new HashMap<>();
-        this.lowLink = new HashMap<>();
         this.number = new HashMap<>();
-        this.tStack = new Stack<>();
-        this.sccList = new ArrayList<>();
         this.lastDesc = new ArrayList<>();
         this.backEdges = new HashMap<>();
         this.otherEdges = new HashMap<>();
@@ -101,9 +88,6 @@ public class ControlFlowGraph {
         computeDominators();
         DFS(this.head, 0);
         analyseLoops();
-        for (Loop l : this.loopList) {
-            l.stringify();
-        }
         loopTypes();
     }
 
@@ -167,7 +151,7 @@ public class ControlFlowGraph {
         this.number.put(bb, index);
         this.bbListPreorder.add(bb);
         this.lastDesc.add(index);
-        int lastVar =index;
+        int lastVar = index;
         for (BasicBlock succ : bb.successors) {
             if (!this.visited.contains(succ.id)) {
                 lastVar = DFS(succ, index+1);
@@ -295,7 +279,7 @@ public class ControlFlowGraph {
                     l.terminator.instructions.addLast(new Instruction(0, "while_end", 0, 0));
                 } else {
                     l.loopType = "endless";
-                    System.out.println("unexpected endless loop");
+                    System.out.println("unexpected endless loop detected in cfg");
                     System.exit(1);
                 }
             }
@@ -337,14 +321,17 @@ public class ControlFlowGraph {
     }
 
     public void stringify() {
-        // System.out.println("Insert method name:");
-        // int i = 0;
-        // for (BasicBlock bb : this.bbList) {
-        //     System.out.println("BB " + i + ":");
-        //     bb.stringify();
-        //     i++;
-        // }
+        System.out.println("Insert method name:");
+        int i = 0;
+        for (BasicBlock bb : this.bbList) {
+            System.out.println("BB " + i + ":");
+            bb.stringify();
+            i++;
+        }
 
+        for (Loop l : this.loopList) {
+            l.stringify();
+        }
     }
 
     public List<Instruction> getInstructions() {

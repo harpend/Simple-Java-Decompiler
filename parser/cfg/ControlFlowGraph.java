@@ -87,6 +87,7 @@ public class ControlFlowGraph {
         this.bbListPreorder = new ArrayList<>();
         computeDominators();
         DFS(this.head, 0);
+        this.bbListReversePostorder = bbListPostorder.reversed();
         analyseLoops();
         loopTypes();
     }
@@ -158,6 +159,7 @@ public class ControlFlowGraph {
             } 
         }
 
+        this.bbListPostorder.add(bb);
         this.lastDesc.set(this.number.get(bb), lastVar);
         return lastVar;
     }
@@ -173,6 +175,7 @@ public class ControlFlowGraph {
             for (BasicBlock v : w.predecessors) {
                 if (isAncestor(w, v)) {
                     this.backEdges.get(w).add(v);
+                    v.isLatch = true;
                 } else {
                     this.otherEdges.get(w).add(v);
                 }
@@ -211,6 +214,7 @@ public class ControlFlowGraph {
             
             if (!P.isEmpty()) {
                 Loop l = new Loop(w, "temp");
+                w.isHeader = true;
                 if (!w.type.equals("irreducible")) {
                     l.isReducible = true;
                 }
@@ -318,6 +322,42 @@ public class ControlFlowGraph {
                 }
             }
         } while (changed);
+    }
+
+    private void analyse2Way() {
+        // this.unresolvedConditionals = new HashSet<>();
+        for (BasicBlock bb : this.bbListReversePostorder) {
+            if (bb.successors.size() == 2 && !bb.isHeader && !bb.isLatch) {
+                List<BasicBlock> succList = new ArrayList<>(bb.successors);
+                BasicBlock trueBlock = succList.get(0);
+                BasicBlock falseBlock = succList.get(1);
+                if (trueBlock.successors.size() != 1 || falseBlock.successors.size() != 1) {
+                    // not an if else
+                    System.out.println("unhandled if");
+                    System.exit(1);
+                    continue;
+                }
+
+                List<BasicBlock> trueSuccList = new ArrayList<>(trueBlock.successors);
+                List<BasicBlock> falseSuccList = new ArrayList<>(falseBlock.successors);
+                BasicBlock trueBlockSucc = succList.get(0);
+                BasicBlock falseBlockSucc = succList.get(0);
+                if (!trueBlockSucc.equals(falseBlockSucc)) {
+                    // not an if else
+                    System.out.println("unhandled if");
+                    System.exit(1);
+                    continue;
+                }
+
+                // it is an if else
+                System.out.println("-------if-else------");
+                System.out.println(bb.id);
+                System.out.println(trueBlock.id);
+                System.out.println(falseBlock.id);
+                System.out.println(trueBlockSucc.id);
+                System.out.println("-------end-if-else------");
+            }
+        }
     }
 
     public void stringify() {

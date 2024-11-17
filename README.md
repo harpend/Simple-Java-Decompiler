@@ -1,8 +1,6 @@
 # Simple Java Decompiler
 
-## Current status: in development.
-
-##
+## Current status: developing...
 
 This decompiler is written entirely from scratch. For most instructions the process is simply done by keeping track of the stack and more complicated decompilation is done through the use of control flow graphs. The aim of this is to teach myself a basic overview of how decompilation works and before attempting to build decompilers for binary executables.
 

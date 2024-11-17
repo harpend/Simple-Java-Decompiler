@@ -20,10 +20,12 @@ public class BasicBlock {
     public Edge loopEdge;
     public int header;
     public String type;
+    public boolean isHeader = false;
+    public boolean isLatch = false;
 
     public BasicBlock(Instruction l, int id) {
         this.leader = l;
-        this.instructions = new ArrayList<Instruction>();
+        this.instructions = new ArrayList<>();
         this.successors = new HashSet<>();
         this.predecessors = new HashSet<>();
         this.instructions.add(l);

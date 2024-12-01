@@ -349,7 +349,8 @@ public class ControlFlowGraph {
                     continue;
                 }
 
-                // it is an if else
+                // it is an if else TODO: insert the instructions if at bb and else at falseBlock
+                // verify true block and false block somehow, read bytecode
                 System.out.println("-------if-else------");
                 System.out.println(bb.id);
                 System.out.println(trueBlock.id);

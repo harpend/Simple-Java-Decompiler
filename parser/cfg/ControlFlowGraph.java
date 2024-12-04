@@ -112,6 +112,7 @@ public class ControlFlowGraph {
             if (fallToNext) {
                 bb.predecessors.add(this.prevBB);
                 this.prevBB.successors.add(bb);
+                this.prevBB.next = bb;
             }
 
             Instruction t = bb.instructions.getLast();
@@ -124,9 +125,12 @@ public class ControlFlowGraph {
                     BasicBlock bbSwap = this.i2bb.get(t.index1);
                     bb.successors.add(bbSwap);
                     bbSwap.predecessors.add(bb);
+                    bb.branch = bbSwap;
+                    bb.TYPE = BasicBlock.TYPE_CONDITIONAL_BRANCH;
                 } else if (t.type.contains("return")) {
-                    // bb.successors.add(this.fakeEnd.leader.line); i dont think this line is needed?
-                    // this.fakeEnd.predecessors.add(bb);
+                    bb.TYPE = BasicBlock.TYPE_RETURN;
+                } else {
+                    bb.TYPE = BasicBlock.TYPE_STATEMENTS;
                 }
             } else {
                 System.out.println("error with terminators");

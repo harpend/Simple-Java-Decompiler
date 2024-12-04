@@ -40,5 +40,8 @@ Depth-First Search and Linear Graph Algorithms - Robert Tarjan
 
 Reverse Compilation Techniques - Cristina Cifuentes
 
+Static Single Assignment for Decompilation - Michael James Van Emmerik
+
 Backer Street - Giampiero Caprino
 
+JD-Core - Emmanuel Dupuy

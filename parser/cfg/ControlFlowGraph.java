@@ -5,15 +5,12 @@ import java.util.BitSet;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import parser.Instruction;
 import parser.cfg.helpers.LoopHelper;
 import parser.cfg.types.BasicBlock;
 import parser.cfg.types.Loop;
-import parser.cfg.types.UnionFindNode;
 
 public class ControlFlowGraph {
     private Dictionary<String, Object> method;
@@ -107,8 +104,8 @@ public class ControlFlowGraph {
 
     private void linkBBS() {
         boolean fallToNext = false;
-        // this.fakeEnd = new BasicBlock(new Instruction(-1, null, 0, 0));
-        for (BasicBlock bb : this.bbList) {
+        for (int i = 0; i < this.bbList.size(); i++) {
+            BasicBlock bb = this.bbList.get(i);
             if (fallToNext) {
                 bb.predecessors.add(this.prevBB);
                 this.prevBB.successors.add(bb);
@@ -126,11 +123,13 @@ public class ControlFlowGraph {
                     bb.successors.add(bbSwap);
                     bbSwap.predecessors.add(bb);
                     bb.branch = bbSwap;
+                    bb.next = i != this.bbList.size() ? this.bbList.get(i+1) : null;
                     bb.TYPE = BasicBlock.TYPE_CONDITIONAL_BRANCH;
                 } else if (t.type.contains("return")) {
                     bb.TYPE = BasicBlock.TYPE_RETURN;
                 } else {
                     bb.TYPE = BasicBlock.TYPE_STATEMENTS;
+                    bb.next = i != this.bbList.size() ? this.bbList.get(i+1) : null;
                 }
             } else {
                 System.out.println("error with terminators");

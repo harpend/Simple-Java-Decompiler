@@ -76,6 +76,7 @@ public class ControlFlowGraph {
         LoopHelper lhelper = new LoopHelper(this);
         this.loopList = lhelper.getLoops();
         this.bbListReversePostorder = lhelper.getPostorder().reversed();
+        CFGReducer.reduceCFG(this);
     }
 
     private void generateBBS() {
@@ -232,6 +233,18 @@ public class ControlFlowGraph {
             }
         }
         return newInstructions;
+    }
+
+    public BasicBlock newBB(BasicBlock bb) {
+        BasicBlock newBB = new BasicBlock(bb, this.bbList.size());
+        bbList.add(newBB);
+        return newBB;
+    }
+
+    public BasicBlock newLoopBB(Loop l) {
+        BasicBlock newBB = new BasicBlock(l, this.bbList.size());
+        bbList.add(newBB);
+        return newBB;
     }
 
 }

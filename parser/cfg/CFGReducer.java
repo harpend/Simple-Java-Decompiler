@@ -11,7 +11,7 @@ public class CFGReducer {
     }
 
     public static boolean reduceCFG(BasicBlock bb, HashSet<BasicBlock> visited) {
-        if ((bb.TYPE & BasicBlock.GROUP_END) == 0 && (!visited.contains(bb))) {
+        if (!matchType(bb, BasicBlock.GROUP_END) && (!visited.contains(bb))) {
             visited.add(bb);
             switch (bb.TYPE) {
                 case BasicBlock.TYPE_STATEMENTS:
@@ -30,10 +30,34 @@ public class CFGReducer {
     }
 
     private static boolean reduceCB(BasicBlock bb, HashSet<BasicBlock> visited) {
-        return true;
+        if (reduceCFG(bb.next, visited) && reduceCFG(bb.branch, visited)) {
+            return reduceCB(bb);
+        }
+        
+        return false;
+    }
+
+    private static boolean reduceCB(BasicBlock bb) {
+        if (matchType(bb.next, BasicBlock.GROUP_END) && (bb.next.predecessors.size() <= 1)) {
+            // createIf();
+            System.out.println("check");
+            bb.next.stringify();
+            System.exit(0);
+            return true;
+        }
+        
+        System.out.println("check2");
+        System.exit(1);
+        
+
+        return false;
     }
 
     private static boolean reduceLoop(BasicBlock bb, HashSet<BasicBlock> visited) {
         return true;
+    }
+
+    private static boolean matchType(BasicBlock bb, int type) {
+        return (bb.TYPE & type) != 0;
     }
 }

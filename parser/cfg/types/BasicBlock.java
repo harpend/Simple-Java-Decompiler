@@ -35,6 +35,8 @@ public class BasicBlock {
     public static final int GROUP_END               = TYPE_END|TYPE_RETURN|TYPE_RETURN_VALUE|TYPE_RET|TYPE_LOOP_START|TYPE_LOOP_CONTINUE|TYPE_LOOP_END|TYPE_INFINITE_GOTO|TYPE_JUMP;
     // public static final int GROUP_CONDITION         = TYPE_CONDITION|TYPE_CONDITION_OR|TYPE_CONDITION_AND;
 
+    public static final BasicBlock END = new BasicBlock(TYPE_END);
+
     public Instruction leader;
     public Instruction terminator;
     public boolean visited;
@@ -67,6 +69,43 @@ public class BasicBlock {
         this.branch = null;
         this.next = null;
         this.TYPE = 0;
+    }
+
+    public BasicBlock(BasicBlock bb, int id) {
+        this.leader = null;
+        this.instructions = bb.instructions;
+        this.successors = bb.successors;
+        this.predecessors = bb.predecessors;
+        this.dfspPos = 0;
+        this.loopEdge = null;
+        this.id = id;
+        this.header = bb.header;
+        this.type = "Non-Header";
+        this.branch = bb.branch;
+        this.next = bb.next;
+        this.TYPE = bb.TYPE;
+    }
+
+    public BasicBlock(Loop l, int id) {
+        this.leader = l.header.leader;
+        this.instructions = new ArrayList<>();
+        for (BasicBlock bb : l.nodesInLoop) {
+            this.instructions.addAll(bb.instructions);
+        }
+
+        this.successors = l.terminator.successors;
+        this.predecessors = l.header.predecessors;
+        this.dfspPos = 0;
+        this.loopEdge = null;
+        this.id = id;
+        this.header = id;
+        this.type = "Loop";
+        this.next = this.branch = END;
+        this.TYPE = TYPE_LOOP;
+    }
+
+    public BasicBlock(int type) {
+        this.TYPE = type;
     }
 
     public void addInstruction(Instruction i) {

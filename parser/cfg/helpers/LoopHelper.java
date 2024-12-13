@@ -192,27 +192,28 @@ public class LoopHelper {
     }
 
     private BasicBlock reduceLoop(Loop loop) {
+        // and set predecessors/successors not in loop to loop
+        // remove predecessors and successors not in loop from nodes in loop
+        // set loop start and loop end node types to prevent detection as an if or other structure
+
+        // this doesn't take into accound break/continue statements
         BasicBlock loopBB = this.cfg.newTypeBB(BasicBlock.TYPE_LOOP);
         for (BasicBlock pred : loop.header.predecessors) {
             if (!loop.nodesInLoop.contains(pred)) {
-                pred.replace(loop.header, loopBB);
                 loopBB.predecessors.add(pred);
             }
         }
 
         for (BasicBlock succ : loop.terminator.successors) {
             if (!loop.nodesInLoop.contains(succ)) {
-                succ.replace(loop.terminator, loopBB);
                 loopBB.successors.add(succ);
             }
         }
 
-        // add instructions
-        loopBB.sub1 = loop.header;
-        loopBB.next = loop.terminator;
-        loop.terminator.replacePred(loop.nodesInLoop, loopBB);
+        loopBB.subNodes.addAll(loop.nodesInLoop);
         loop.header.predecessors.clear();
-        loop.header.successors.clear();
+        loop.terminator.successors.clear();
+        // reduce non-loop constructs in subNodes sub graph
         return loopBB;
     } 
 

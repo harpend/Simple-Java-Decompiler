@@ -54,8 +54,7 @@ public class BasicBlock {
     public boolean isLatch = false;
     public BasicBlock branch;
     public BasicBlock next;
-    public BasicBlock sub1;
-    public BasicBlock sub2;
+    public List<BasicBlock> subNodes;
 
     public BasicBlock(Instruction l, int id) {
         this.leader = l;
@@ -70,8 +69,7 @@ public class BasicBlock {
         this.type = "Non-Header";
         this.branch = null;
         this.next = null;
-        this.sub1 = null;
-        this.sub2 = null;
+        this.subNodes = new ArrayList<>();
         this.TYPE = 0;
     }
 
@@ -88,8 +86,7 @@ public class BasicBlock {
         this.branch = bb.branch;
         this.next = bb.next;
         this.TYPE = bb.TYPE;
-        this.sub1 = null;
-        this.sub2 = null;
+        this.subNodes = new ArrayList<>();
     }
 
     public BasicBlock(Loop l, int id) {
@@ -108,8 +105,7 @@ public class BasicBlock {
         this.type = "Loop";
         this.next = this.branch = END;
         this.TYPE = TYPE_LOOP;
-        this.sub1 = null;
-        this.sub2 = null;
+        this.subNodes = new ArrayList<>();
     }
 
     public BasicBlock(int type, int id) {
@@ -146,52 +142,52 @@ public class BasicBlock {
         System.out.println();
     }
 
-    public void replace(BasicBlock prev, BasicBlock post) {
-        if (this.next == prev) {
-            this.next = post;
-        }
+    // public void replace(BasicBlock prev, BasicBlock post) {
+    //     if (this.next == prev) {
+    //         this.next = post;
+    //     }
 
-        if (this.branch == prev) {
-            this.branch = post;
-        }
+    //     if (this.branch == prev) {
+    //         this.branch = post;
+    //     }
 
-        if (this.sub1 == prev) {
-            this.sub1 = post;
-        }
+    //     if (this.sub1 == prev) {
+    //         this.sub1 = post;
+    //     }
 
-        if (this.sub2 == prev) {
-            this.sub2 = post;
-        }
+    //     if (this.sub2 == prev) {
+    //         this.sub2 = post;
+    //     }
 
-        if (this.predecessors.contains(prev)) {
-            this.predecessors.remove(prev);
-            this.predecessors.add(post);
-        }
+    //     if (this.predecessors.contains(prev)) {
+    //         this.predecessors.remove(prev);
+    //         this.predecessors.add(post);
+    //     }
 
-        if (this.successors.contains(prev)) {
-            this.successors.remove(prev);
-            this.successors.add(post);
-        }
-    }
+    //     if (this.successors.contains(prev)) {
+    //         this.successors.remove(prev);
+    //         this.successors.add(post);
+    //     }
+    // }
 
-    public void replacePred(Set<BasicBlock> prev, BasicBlock post) {
-        if (prev.contains(this.next)) {
-            this.next = post;
-        }
+    // public void replacePred(Set<BasicBlock> prev, BasicBlock post) {
+    //     if (prev.contains(this.next)) {
+    //         this.next = post;
+    //     }
 
-        if (prev.contains(this.branch)) {
-            this.branch = post;
-        }
+    //     if (prev.contains(this.branch)) {
+    //         this.branch = post;
+    //     }
 
-        if (prev.contains(this.sub1)) {
-            this.sub1 = post;
-        }
+    //     if (prev.contains(this.sub1)) {
+    //         this.sub1 = post;
+    //     }
 
-        if (prev.contains(this.sub2)) {
-            this.sub2 = post;
-        }
+    //     if (prev.contains(this.sub2)) {
+    //         this.sub2 = post;
+    //     }
 
-        this.predecessors.removeAll(prev);
-        this.predecessors.add(post);
-    }
+    //     this.predecessors.removeAll(prev);
+    //     this.predecessors.add(post);
+    // }
 }

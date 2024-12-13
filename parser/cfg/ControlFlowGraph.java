@@ -241,8 +241,8 @@ public class ControlFlowGraph {
         return newBB;
     }
 
-    public BasicBlock newLoopBB(Loop l) {
-        BasicBlock newBB = new BasicBlock(l, this.bbList.size());
+    public BasicBlock newTypeBB(int type) {
+        BasicBlock newBB = new BasicBlock(type, this.bbList.size());
         bbList.add(newBB);
         return newBB;
     }

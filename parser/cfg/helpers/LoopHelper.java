@@ -104,6 +104,8 @@ public class LoopHelper {
                     if (!isAncestor(w, yp.getBasicBlock())) {
                         w.type = "irreducible";
                         this.otherEdges.get(w).add(yp.getBasicBlock());
+                        System.out.println("Irreducible loop found in graph");
+                        System.exit(1);
                     } else if (!this.number.get(yp.getBasicBlock()).equals(this.number.get(w)) && !P.contains(yp)) {
                         workList.add(yp);
                         P.add(yp);
@@ -188,6 +190,30 @@ public class LoopHelper {
             }
         }
     }
+
+    public BasicBlock reduceLoop(Loop loop) {
+        BasicBlock loopBB = this.cfg.newTypeBB(BasicBlock.TYPE_LOOP);
+        for (BasicBlock pred : loop.header.predecessors) {
+            if (!loop.nodesInLoop.contains(pred)) {
+                pred.replace(loop.header, loopBB);
+                loopBB.predecessors.add(pred);
+            }
+        }
+
+        for (BasicBlock succ : loop.terminator.successors) {
+            if (!loop.nodesInLoop.contains(succ)) {
+                succ.replace(loop.terminator, loopBB);
+                loopBB.successors.add(succ);
+            }
+        }
+
+        loopBB.sub1 = loop.header;
+        loopBB.next = loop.terminator;
+        loop.terminator.replacePred(loop.nodesInLoop, loopBB);
+        loop.header.predecessors.clear();
+        loop.header.successors.clear();
+        return loopBB;
+    } 
 
     public List<BasicBlock> getPostorder() {
         return this.bbListPostorder;

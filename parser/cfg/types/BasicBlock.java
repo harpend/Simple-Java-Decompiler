@@ -47,7 +47,6 @@ public class BasicBlock {
     public Set<BasicBlock> predecessors;
     public BitSet dominators;
     public int dfspPos;
-    public Edge loopEdge;
     public int header;
     public String type;
     public boolean isHeader = false;
@@ -63,7 +62,6 @@ public class BasicBlock {
         this.predecessors = new HashSet<>();
         this.instructions.add(l);
         this.dfspPos = 0;
-        this.loopEdge = null;
         this.id = id;
         this.header = 0;
         this.type = "Non-Header";
@@ -79,7 +77,6 @@ public class BasicBlock {
         this.successors = bb.successors;
         this.predecessors = bb.predecessors;
         this.dfspPos = 0;
-        this.loopEdge = null;
         this.id = id;
         this.header = bb.header;
         this.type = "Non-Header";
@@ -99,7 +96,6 @@ public class BasicBlock {
         this.successors = l.terminator.successors;
         this.predecessors = l.header.predecessors;
         this.dfspPos = 0;
-        this.loopEdge = null;
         this.id = id;
         this.header = id;
         this.type = "Loop";
@@ -111,6 +107,15 @@ public class BasicBlock {
     public BasicBlock(int type, int id) {
         this.TYPE = type;
         this.id = id;
+        this.instructions = new ArrayList<>();
+        this.successors = new HashSet<>();
+        this.predecessors = new HashSet<>();
+        this.dfspPos = 0;
+        this.header = 0;
+        this.type = "Non-Header";
+        this.branch = null;
+        this.next = null;
+        this.subNodes = new ArrayList<>();
     }
 
     public BasicBlock(int type) {
@@ -121,7 +126,15 @@ public class BasicBlock {
         this.instructions.add(i);
     }
 
+    public boolean matchType(int type) {
+        return (this.TYPE & type) != 0;
+    }
+
     public void stringify() {
+        if (matchType(TYPE_LOOP)) {
+            stringifyLoop();
+            return;
+        }
         for (Instruction i : this.instructions) {
             System.out.println("\t" + i.line + " " + i.type + " " + i.index1 + " " + i.index2);
         }
@@ -140,6 +153,15 @@ public class BasicBlock {
         System.out.println();
 
         System.out.println();
+    }
+
+    private void stringifyLoop() {
+        System.out.println("LOOP:");
+        for (BasicBlock basicBlock : this.subNodes) {
+            basicBlock.stringify();
+        }
+
+        System.out.println("LOOP END");
     }
 
     // public void replace(BasicBlock prev, BasicBlock post) {

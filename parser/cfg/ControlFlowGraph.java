@@ -1,5 +1,6 @@
 package parser.cfg;
 
+import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Dictionary;
@@ -30,7 +31,8 @@ public class ControlFlowGraph {
     private Instruction prevInstruction = null;
     private BasicBlock prevBB = null;
     private Map<Integer, BitSet> dominaterMap;
-    private List<Loop> loopList;
+    public List<Loop> loopList;
+    private LoopHelper lhelper;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -42,6 +44,7 @@ public class ControlFlowGraph {
         this.i2bb = new HashMap<Integer, BasicBlock>();
         this.id2bb = new HashMap<>();
         this.loopList = new ArrayList<>();
+        this.lhelper = null;
     }
 
     public Instruction addInstruction(Instruction i, boolean cfChange) {
@@ -73,10 +76,11 @@ public class ControlFlowGraph {
         this.bbListPostorder = new ArrayList<>();
         this.bbListPreorder = new ArrayList<>();
         computeDominators();
-        LoopHelper lhelper = new LoopHelper(this);
-        this.loopList = lhelper.getLoops();
-        this.bbListReversePostorder = lhelper.getPostorder().reversed();
-        CFGReducer.reduceCFG(this);
+        this.lhelper = new LoopHelper(this);
+        this.lhelper.getLoops();
+        this.bbListReversePostorder = this.lhelper.getPostorder().reversed();
+        this.lhelper.reduceLoops();
+        // CFGReducer.reduceCFG(this);
     }
 
     private void generateBBS() {
@@ -220,9 +224,6 @@ public class ControlFlowGraph {
             i++;
         }
 
-        for (Loop l : this.loopList) {
-            l.stringify();
-        }
     }
 
     public List<Instruction> getInstructions() {

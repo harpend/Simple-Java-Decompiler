@@ -23,12 +23,11 @@ public class LoopHelper {
     private Map<BasicBlock, HashSet<BasicBlock>> backEdges;
     private Map<BasicBlock, HashSet<BasicBlock>> otherEdges;
     private List<UnionFindNode> LP;
-    private List<Loop> loopList;
+    // private List<Loop> loopList;
 
 
     public LoopHelper(ControlFlowGraph cfg) {
         this.cfg = cfg;
-        this.loopList = new ArrayList<>();
         this.visited = new HashSet<>();
         this.bbListPreorder = new ArrayList<>();
         this.bbListPostorder = new ArrayList<>();
@@ -38,14 +37,12 @@ public class LoopHelper {
         this.otherEdges = new HashMap<>();
     }
 
-    public List<Loop> getLoops() {
+    public void getLoops() {
         DFS(this.cfg.head, 0);
         analyseLoops();
         loopTypes();
-        return this.loopList;
     }
 
-    // TODO add reduce loop method in Loop type see jd-core
     private int DFS(BasicBlock bb, int index) {
         this.visited.add(bb.id);
         this.number.put(bb, index);
@@ -63,14 +60,14 @@ public class LoopHelper {
         return lastVar;
     }
 
-        // Havlak-Tarjan
+    // Havlak-Tarjan
     private void analyseLoops() {
         this.LP = new ArrayList<>();
         for (int i = 0; i < this.cfg.bbList.size(); i++) {
             BasicBlock w = this.bbListPreorder.get(i);
             this.backEdges.put(w, new HashSet<>());
             this.otherEdges.put(w, new HashSet<>());
-            LP.add(new UnionFindNode(w, i));
+            this.LP.add(new UnionFindNode(w, i));
             for (BasicBlock v : w.predecessors) {
                 if (isAncestor(w, v)) {
                     this.backEdges.get(w).add(v);
@@ -90,8 +87,8 @@ public class LoopHelper {
                 } else {
                     w.type = "self";
                     Loop loop = new Loop(w, "temp");
-                    this.loopList.add(loop);
-                    LP.get(i).setLoop(loop);
+                    this.cfg.loopList.add(loop);
+                    this.LP.get(i).setLoop(loop);
                 }
             }
 
@@ -114,13 +111,17 @@ public class LoopHelper {
             }
             
             if (!P.isEmpty()) {
+                if (w.type.equals("self")) {
+                    continue;
+                }
+
                 Loop l = new Loop(w, "temp");
                 w.isHeader = true;
                 if (!w.type.equals("irreducible")) {
                     l.isReducible = true;
                 }
     
-                LP.get(i).setLoop(l);
+                this.LP.get(i).setLoop(l);
                 UnionFindNode ufn = LP.get(this.number.get(w));
                 for (UnionFindNode x : P) {
                     x.union(ufn);
@@ -134,9 +135,8 @@ public class LoopHelper {
 
                         l.nodesInLoop.add(x.getBasicBlock());
                     }
+                    this.cfg.loopList.add(l);
                 }
-    
-                this.loopList.add(l);
             }
         }
     }
@@ -147,7 +147,7 @@ public class LoopHelper {
     }
 
     private void loopTypes() {
-        for (Loop l : this.loopList) {
+        for (Loop l : this.cfg.loopList) {
             int tExits = l.terminator.successors.size();
             int hExits = l.header.successors.size();
             if (tExits == 2) {
@@ -210,7 +210,11 @@ public class LoopHelper {
             }
         }
 
+        loop.header.TYPE = BasicBlock.TYPE_LOOP_START;
+        loop.terminator.TYPE = BasicBlock.TYPE_LOOP_END;
         loopBB.subNodes.addAll(loop.nodesInLoop);
+
+        // this prevents accidental identification as other types
         loop.header.predecessors.clear();
         loop.terminator.successors.clear();
         // reduce non-loop constructs in subNodes sub graph
@@ -219,13 +223,14 @@ public class LoopHelper {
 
     public void reduceLoops() {
         // inner most to outer most
-        for (int i = 0; i < this.loopList.size(); i++) {
-            Loop loop = this.loopList.get(i);
+        System.out.println(this.cfg.loopList.size());
+        for (int i = 0; i < this.cfg.loopList.size(); i++) {
+            Loop loop = this.cfg.loopList.get(i);
             BasicBlock header = loop.header;
             BasicBlock loopBB = reduceLoop(loop);
             // outer most to inner most up to current loop
-            for (int j = this.loopList.size() - 1; j > i; j--) {
-                Loop outerLoop = this.loopList.get(j);
+            for (int j = this.cfg.loopList.size() - 1; j > i; j--) {
+                Loop outerLoop = this.cfg.loopList.get(j);
                 if (outerLoop.header == header) {
                     outerLoop.header = loopBB;
                 }

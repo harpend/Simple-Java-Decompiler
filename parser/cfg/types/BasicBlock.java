@@ -158,7 +158,7 @@ public class BasicBlock {
     private void stringifyLoop() {
         System.out.println("LOOP:");
         for (BasicBlock basicBlock : this.subNodes) {
-            basicBlock.stringify();
+            System.out.println(basicBlock.id);
         }
 
         System.out.println("LOOP END");

@@ -111,10 +111,6 @@ public class LoopHelper {
             }
             
             if (!P.isEmpty()) {
-                if (w.type.equals("self")) {
-                    continue;
-                }
-
                 Loop l = new Loop(w, "temp");
                 w.isHeader = true;
                 if (!w.type.equals("irreducible")) {
@@ -210,10 +206,9 @@ public class LoopHelper {
             }
         }
 
-        loop.header.TYPE = BasicBlock.TYPE_LOOP_START;
-        loop.terminator.TYPE = BasicBlock.TYPE_LOOP_END;
+        loop.header.TYPE += BasicBlock.TYPE_LOOP_START;
+        loop.terminator.TYPE += BasicBlock.TYPE_LOOP_END;
         loopBB.subNodes.addAll(loop.nodesInLoop);
-
         // this prevents accidental identification as other types
         loop.header.predecessors.clear();
         loop.terminator.successors.clear();
@@ -223,7 +218,6 @@ public class LoopHelper {
 
     public void reduceLoops() {
         // inner most to outer most
-        System.out.println(this.cfg.loopList.size());
         for (int i = 0; i < this.cfg.loopList.size(); i++) {
             Loop loop = this.cfg.loopList.get(i);
             BasicBlock header = loop.header;
@@ -234,12 +228,12 @@ public class LoopHelper {
                 if (outerLoop.header == header) {
                     outerLoop.header = loopBB;
                 }
-
+                
                 if (outerLoop.nodesInLoop.contains(header)) {
                     outerLoop.nodesInLoop.removeAll(loop.nodesInLoop);
                     outerLoop.nodesInLoop.add(loopBB);
                 }
-
+                
                 if (outerLoop.terminator == header) {
                     outerLoop.terminator = loopBB;
                 }

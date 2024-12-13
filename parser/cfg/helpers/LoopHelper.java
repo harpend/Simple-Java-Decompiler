@@ -83,7 +83,7 @@ public class LoopHelper {
             List<UnionFindNode> P = new ArrayList<>();
             for (BasicBlock v : this.backEdges.get(w)) {
                 if (!v.equals(w)) {
-                    P.add(LP.get(this.number.get(v)).findSet());
+                    P.add(this.LP.get(this.number.get(v)).findSet());
                 } else {
                     w.type = "self";
                     Loop loop = new Loop(w, "temp");
@@ -97,7 +97,7 @@ public class LoopHelper {
             while(!workList.isEmpty()) {
                 UnionFindNode ufn = workList.poll();
                 for (BasicBlock y : this.otherEdges.get(ufn.getBasicBlock())) {
-                    UnionFindNode yp = LP.get(this.number.get(y)).findSet();
+                    UnionFindNode yp = this.LP.get(this.number.get(y)).findSet();
                     if (!isAncestor(w, yp.getBasicBlock())) {
                         w.type = "irreducible";
                         this.otherEdges.get(w).add(yp.getBasicBlock());
@@ -118,11 +118,12 @@ public class LoopHelper {
                 }
     
                 this.LP.get(i).setLoop(l);
-                UnionFindNode ufn = LP.get(this.number.get(w));
+                UnionFindNode ufn = this.LP.get(this.number.get(w));
                 for (UnionFindNode x : P) {
                     x.union(ufn);
                     if (x.getLoop() != null) {
                         ufn.getLoop().parentLoop = l;
+                        l.nodesInLoop.add(x.getBasicBlock());
                     } else {
                         BasicBlock bb = x.getBasicBlock();
                         if (this.backEdges.get(w).contains(bb)) {
@@ -131,8 +132,9 @@ public class LoopHelper {
 
                         l.nodesInLoop.add(x.getBasicBlock());
                     }
-                    this.cfg.loopList.add(l);
                 }
+
+                this.cfg.loopList.add(l);
             }
         }
     }

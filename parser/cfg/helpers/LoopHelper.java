@@ -191,7 +191,7 @@ public class LoopHelper {
         }
     }
 
-    public BasicBlock reduceLoop(Loop loop) {
+    private BasicBlock reduceLoop(Loop loop) {
         BasicBlock loopBB = this.cfg.newTypeBB(BasicBlock.TYPE_LOOP);
         for (BasicBlock pred : loop.header.predecessors) {
             if (!loop.nodesInLoop.contains(pred)) {
@@ -207,6 +207,7 @@ public class LoopHelper {
             }
         }
 
+        // add instructions
         loopBB.sub1 = loop.header;
         loopBB.next = loop.terminator;
         loop.terminator.replacePred(loop.nodesInLoop, loopBB);
@@ -214,6 +215,31 @@ public class LoopHelper {
         loop.header.successors.clear();
         return loopBB;
     } 
+
+    public void reduceLoops() {
+        // inner most to outer most
+        for (int i = 0; i < this.loopList.size(); i++) {
+            Loop loop = this.loopList.get(i);
+            BasicBlock header = loop.header;
+            BasicBlock loopBB = reduceLoop(loop);
+            // outer most to inner most up to current loop
+            for (int j = this.loopList.size() - 1; j > i; j--) {
+                Loop outerLoop = this.loopList.get(j);
+                if (outerLoop.header == header) {
+                    outerLoop.header = loopBB;
+                }
+
+                if (outerLoop.nodesInLoop.contains(header)) {
+                    outerLoop.nodesInLoop.removeAll(loop.nodesInLoop);
+                    outerLoop.nodesInLoop.add(loopBB);
+                }
+
+                if (outerLoop.terminator == header) {
+                    outerLoop.terminator = loopBB;
+                }
+            }
+        }
+    }
 
     public List<BasicBlock> getPostorder() {
         return this.bbListPostorder;

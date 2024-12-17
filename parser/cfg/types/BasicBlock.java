@@ -161,7 +161,22 @@ public class BasicBlock {
             System.out.println(basicBlock.id);
         }
 
+        
+        System.out.println("Predecessors:");
+        for (BasicBlock pred : this.predecessors) {
+            System.out.print(pred.id + " ");
+        }
+        System.out.println();
+
+        System.out.println();
+        System.out.println("Successors:");
+        for (BasicBlock succ : this.successors) {
+            System.out.print(succ.id + " ");
+        }
+        
+        System.out.println();
         System.out.println("LOOP END");
+        System.out.println();
     }
 
     // public void replace(BasicBlock prev, BasicBlock post) {

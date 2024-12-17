@@ -13,6 +13,7 @@ public class CFGReducer {
     public static boolean reduceCFG(BasicBlock bb, HashSet<BasicBlock> visited) {
         if (!matchType(bb, BasicBlock.GROUP_END) && (!visited.contains(bb))) {
             visited.add(bb);
+            // use match type instead
             switch (bb.TYPE) {
                 case BasicBlock.TYPE_STATEMENTS:
                 case BasicBlock.TYPE_IF:
@@ -21,6 +22,7 @@ public class CFGReducer {
                 case BasicBlock.TYPE_CONDITIONAL_BRANCH:
                     return reduceCB(bb, visited);
                 case BasicBlock.TYPE_LOOP:
+                    // reduce nodes in loop
                     return reduceLoop(bb, visited);
                 default:
                     throw new AssertionError();
@@ -38,15 +40,13 @@ public class CFGReducer {
     }
 
     private static boolean reduceCB(BasicBlock bb) {
-        if (matchType(bb.next, BasicBlock.GROUP_END) && (bb.next.predecessors.size() <= 1)) {
+        if (bb.next.matchType(BasicBlock.GROUP_END) && (bb.next.predecessors.size() <= 1)) {
             // createIf();
-            System.out.println("check");
             bb.next.stringify();
             System.exit(0);
             return true;
         }
         
-        System.out.println("check2");
         System.exit(1);
         
 
@@ -54,6 +54,7 @@ public class CFGReducer {
     }
 
     private static boolean reduceLoop(BasicBlock bb, HashSet<BasicBlock> visited) {
+        // reduce nodes in loop
         return true;
     }
 

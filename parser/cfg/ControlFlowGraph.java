@@ -221,6 +221,7 @@ public class ControlFlowGraph {
         for (BasicBlock bb : this.bbList) {
             System.out.println("BB " + i + ":");
             bb.stringify();
+            
             i++;
         }
 

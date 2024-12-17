@@ -198,15 +198,24 @@ public class LoopHelper {
         BasicBlock loopBB = this.cfg.newTypeBB(BasicBlock.TYPE_LOOP);
         for (BasicBlock pred : loop.header.predecessors) {
             if (!loop.nodesInLoop.contains(pred)) {
+                System.out.println(loopBB.id + " " + pred.id);
                 loopBB.predecessors.add(pred);
+                pred.successors.add(loopBB);
+                pred.successors.remove(loop.header);
             }
         }
 
+        System.out.println("--------------");
         for (BasicBlock succ : loop.terminator.successors) {
             if (!loop.nodesInLoop.contains(succ)) {
+                System.out.println(loopBB.id + " " + succ.id);
                 loopBB.successors.add(succ);
+                succ.predecessors.add(loopBB);
+                succ.predecessors.remove(loop.terminator);
             }
         }
+
+        System.out.println(loop.header.id);
 
         loop.header.TYPE += BasicBlock.TYPE_LOOP_START;
         loop.terminator.TYPE += BasicBlock.TYPE_LOOP_END;

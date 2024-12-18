@@ -30,7 +30,7 @@ public class LoopHelper {
         this.cfg = cfg;
         this.visited = new HashSet<>();
         this.bbListPreorder = new ArrayList<>();
-        this.bbListPostorder = new ArrayList<>();
+        this.bbListPostorder = new LinkedList<>();
         this.lastDesc = new ArrayList<>();
         this.number = new HashMap<>();
         this.backEdges = new HashMap<>();
@@ -198,28 +198,24 @@ public class LoopHelper {
         BasicBlock loopBB = this.cfg.newTypeBB(BasicBlock.TYPE_LOOP);
         for (BasicBlock pred : loop.header.predecessors) {
             if (!loop.nodesInLoop.contains(pred)) {
-                System.out.println(loopBB.id + " " + pred.id);
                 loopBB.predecessors.add(pred);
                 pred.successors.add(loopBB);
                 pred.successors.remove(loop.header);
             }
         }
 
-        System.out.println("--------------");
         for (BasicBlock succ : loop.terminator.successors) {
             if (!loop.nodesInLoop.contains(succ)) {
-                System.out.println(loopBB.id + " " + succ.id);
                 loopBB.successors.add(succ);
                 succ.predecessors.add(loopBB);
                 succ.predecessors.remove(loop.terminator);
             }
         }
 
-        System.out.println(loop.header.id);
-
         loop.header.TYPE += BasicBlock.TYPE_LOOP_START;
         loop.terminator.TYPE += BasicBlock.TYPE_LOOP_END;
         loopBB.subNodes.addAll(loop.nodesInLoop);
+    
         // this prevents accidental identification as other types
         loop.header.predecessors.clear();
         loop.terminator.successors.clear();
@@ -249,6 +245,10 @@ public class LoopHelper {
                     outerLoop.terminator = loopBB;
                 }
             }
+            
+            int index = this.bbListPostorder.indexOf(loop.header);
+            this.bbListPostorder.set(index, loopBB);
+            this.bbListPostorder.removeAll(loopBB.subNodes);
         }
     }
 

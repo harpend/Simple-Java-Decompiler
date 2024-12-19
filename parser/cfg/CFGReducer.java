@@ -1,19 +1,24 @@
 package parser.cfg;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import parser.cfg.types.BasicBlock;
 
 public class CFGReducer {
     public static boolean reduceCFG(ControlFlowGraph cfg) {
-        BasicBlock head = cfg.head;
-        HashSet<BasicBlock> visited = new HashSet(cfg.bbList.size());
-        for (BasicBlock bb : cfg.bbListPostorder) {
-            if (bb.successors.size() == 2) {
-                if (bb.matchType(BasicBlock.TYPE_CONDITIONAL_BRANCH)) {
-                    reduceConditional(bb, cfg);
-                } else {
-                    System.out.println("non conditional branch with 2 successors");
-                    System.exit(1);
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (BasicBlock bb : cfg.bbListPostorder) {
+                if (bb.successors.size() == 2) {
+                    if (bb.matchType(BasicBlock.TYPE_CONDITIONAL_BRANCH)) {
+                        changed = reduceConditional(bb, cfg);
+                    } else {
+                        System.out.println("non conditional branch with 2 successors");
+                        System.exit(1);
+                    }
+                } else if (bb.successors.size() == 1) {
+                    changed = reduceConsecutive(bb, cfg);
                 }
             }
         }
@@ -21,7 +26,7 @@ public class CFGReducer {
         return true;
     }
 
-    private static void reduceConditional(BasicBlock bb, ControlFlowGraph cfg) {
+    private static boolean reduceConditional(BasicBlock bb, ControlFlowGraph cfg) {
         if (bb.branch.successors.contains(bb.next)) {
             // normal if
             BasicBlock ifBB = cfg.newTypeBB(BasicBlock.TYPE_IF);
@@ -82,5 +87,46 @@ public class CFGReducer {
             cfg.bbListPostorder.set(index, ifeBB);
             cfg.bbListPostorder.removeAll(ifeBB.subNodes);
         }
+
+        return true;
+    }
+
+    private static boolean reduceConsecutive(BasicBlock bb, ControlFlowGraph cfg) {
+        if (bb.successors.size() == 1) {
+            for (BasicBlock basicBlock : bb.successors) {
+                if (basicBlock.predecessors.size() != 1 && basicBlock.predecessors.contains(bb)) {
+                    System.out.println("could not reduce consecutive");
+                    System.exit(1);
+                }
+            }
+
+            bb.subNodes.addAll(enumerateConsecutives(bb));
+            bb.TYPE += BasicBlock.TYPE_STATEMENTS;
+            int index = cfg.bbListPostorder.indexOf(bb);
+            cfg.bbListPostorder.removeAll(bb.subNodes);
+            cfg.bbListPostorder.set(index, bb);
+            return true;
+        }
+
+        System.out.println("could not reduce consecutive");
+        System.exit(1);
+        return false;
+    }
+
+    private static List<BasicBlock> enumerateConsecutives(BasicBlock bb) {
+        List<BasicBlock> consecBlocks = new ArrayList<>();
+        boolean check = true;
+        BasicBlock tmp = bb;
+        while (tmp.successors.size() <= 1 && check) {
+            consecBlocks.add(tmp);
+            for (BasicBlock basicBlock : tmp.successors) {
+                if (basicBlock.predecessors.size() == 1 && basicBlock.predecessors.contains(tmp)) {
+                    tmp = basicBlock;
+                    check = true;
+                }
+            }
+        }
+
+        return consecBlocks;
     }
 }

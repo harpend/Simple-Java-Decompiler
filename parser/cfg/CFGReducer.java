@@ -23,6 +23,11 @@ public class CFGReducer {
             }
         }
 
+        if (cfg.bbListPostorder.size() != 1) {
+            System.out.println("failed to reduce CFG");
+            return false;
+        }
+
         return true;
     }
 
@@ -48,6 +53,8 @@ public class CFGReducer {
             int index = cfg.bbListPostorder.indexOf(bb);
             cfg.bbListPostorder.set(index, ifBB);
             cfg.bbListPostorder.removeAll(ifBB.subNodes);
+            ifBB.branch = bb.next.branch;
+            ifBB.next = bb.next.next;
         } else {
             // if-else
             if (bb.next.successors.size() > 1 || bb.branch.successors.size() > 1) {
@@ -105,6 +112,8 @@ public class CFGReducer {
             int index = cfg.bbListPostorder.indexOf(bb);
             cfg.bbListPostorder.removeAll(bb.subNodes);
             cfg.bbListPostorder.set(index, bb);
+            bb.successors.clear();
+            bb.successors.addAll(bb.subNodes.getLast().successors);
             return true;
         }
 

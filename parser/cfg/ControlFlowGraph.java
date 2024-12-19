@@ -81,7 +81,10 @@ public class ControlFlowGraph {
         this.bbListPostorder = this.lhelper.getPostorder();
         this.lhelper.reduceLoops();
         this.bbListPostorder = this.lhelper.getPostorder();
-        // CFGReducer.reduceCFG(this);
+        boolean reduced = CFGReducer.reduceCFG(this);
+        if (!reduced) {
+            System.exit(1);
+        }
     }
 
     private void generateBBS() {

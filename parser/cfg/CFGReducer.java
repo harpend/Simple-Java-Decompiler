@@ -107,13 +107,15 @@ public class CFGReducer {
                 }
             }
 
-            bb.subNodes.addAll(enumerateConsecutives(bb));
-            bb.TYPE += BasicBlock.TYPE_STATEMENTS;
+            BasicBlock statsBB = cfg.newTypeBB(BasicBlock.TYPE_STATEMENTS);
+            statsBB.subNodes.addAll(enumerateConsecutives(bb));
+            BasicBlock last = statsBB.subNodes.getLast();
             int index = cfg.bbListPostorder.indexOf(bb);
-            cfg.bbListPostorder.removeAll(bb.subNodes);
-            cfg.bbListPostorder.set(index, bb);
-            bb.successors.clear();
-            bb.successors.addAll(bb.subNodes.getLast().successors);
+            cfg.bbListPostorder.set(index, statsBB);
+            cfg.bbListPostorder.removeAll(statsBB.subNodes);
+            statsBB.successors.addAll(last.successors);
+            statsBB.predecessors.addAll(bb.predecessors);
+            bb.predecessors.clear();
             return true;
         }
 
@@ -127,6 +129,7 @@ public class CFGReducer {
         boolean check = true;
         BasicBlock tmp = bb;
         while (tmp.successors.size() <= 1 && check) {
+            check = false;
             consecBlocks.add(tmp);
             for (BasicBlock basicBlock : tmp.successors) {
                 if (basicBlock.predecessors.size() == 1 && basicBlock.predecessors.contains(tmp)) {

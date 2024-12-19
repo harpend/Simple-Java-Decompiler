@@ -154,7 +154,6 @@ public class LoopHelper {
                     if (!l.header.type.equals("self")) {
                         for (BasicBlock succ : l.header.successors) {
                             if (!l.nodesInLoop.contains(succ) && !l.header.equals(this.LP.get(this.number.get(succ)).findSet().getBasicBlock())) {
-                                System.out.println(this.number.get(l.header));
                                 inLoop = false;
                             }
                         }
@@ -165,7 +164,6 @@ public class LoopHelper {
                         l.header.instructions.addFirst(new Instruction(0, "do", 0, 0));
                         l.terminator.instructions.addLast(new Instruction(0, "do_end", 0, 0));
                       } else {
-                        System.out.println("check");
                         l.loopType = "pre";
                         l.header.instructions.addFirst(new Instruction(0, "while", 0, 0));
                         l.terminator.instructions.addLast(new Instruction(0, "while_end", 0, 0));

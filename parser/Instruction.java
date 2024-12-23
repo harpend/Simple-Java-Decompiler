@@ -11,4 +11,18 @@ public class Instruction {
         this.index2 = j;
         this.type = t;
     }
+
+    public void flip() {
+        switch (this.type) {
+            case "if_icmple":
+                this.type = "if_icmpgt";
+                break;
+            case "if_icmpgt":
+                this.type = "if_icmple";
+                break;
+            default:
+                System.out.println("this instruction cannot be flipped: " + this.type);
+                System.exit(1);
+        }
+    }
 }

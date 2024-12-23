@@ -138,6 +138,9 @@ public class BasicBlock {
         } else if (matchType(TYPE_STATEMENTS)) {
             stringifyStats();
             return;
+        } else if (matchType(TYPE_IF) || matchType(TYPE_IF_ELSE)) {
+            stringifyIf();
+            return;
         }
         for (Instruction i : this.instructions) {
             System.out.println("\t" + i.line + " " + i.type + " " + i.index1 + " " + i.index2);
@@ -204,6 +207,29 @@ public class BasicBlock {
         
         System.out.println();
         System.out.println("STATS END");
+        System.out.println();
+    }
+
+    private void stringifyIf() {
+        System.out.println("IF: ");
+        for (BasicBlock basicBlock : this.subNodes) {
+            System.out.println(basicBlock.id);
+        }
+        
+        System.out.println("Predecessors:");
+        for (BasicBlock pred : this.predecessors) {
+            System.out.print(pred.id + " ");
+        }
+        System.out.println();
+
+        System.out.println();
+        System.out.println("Successors:");
+        for (BasicBlock succ : this.successors) {
+            System.out.print(succ.id + " ");
+        }
+        
+        System.out.println();
+        System.out.println("IF END");
         System.out.println();
     }
 

@@ -644,11 +644,18 @@ public class ClassReader {
                 case (byte)0x87:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "i2d", 0, 0), false));
                 break;
-                case (byte)0xA4:
+                case (byte)0xA3:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
                 int offset2 = ((b2[0]) << 8) | (b2[1]);
-                codeEl.add(cfg.addInstruction( new Instruction(pc, "if_icmple", offset2 +pc, 0), true));
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "if_icmpgt", offset2 +pc, 0), true));
+                pc++;pc++;
+                break;
+                case (byte)0xA4:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                int offset3 = ((b2[0]) << 8) | (b2[1]);
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "if_icmple", offset3 +pc, 0), true));
                 pc++;pc++;
                 break;
                 case (byte)0xAF:

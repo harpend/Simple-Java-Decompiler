@@ -16,7 +16,7 @@ public class ClassParser {
 
         public parser.ast.ClassDeclaration ParseClass() {
             this.cr = new ClassReader();
-            cr.ReadClass("./tests/class/doubleDoWhile2.class");
+            cr.ReadClass("./tests/class/iftest.class");
             String flags = String.join(" ", this.cr.accessFlags);
             String name = this.cr.ResolveCPIndex(this.cr.thisClass);
             List<parser.ast.Subroutine> s = parseSubroutines();
@@ -177,6 +177,7 @@ public class ClassParser {
                     oStack.push(oStack.pop().toString() + " + " + oStack.pop().toString());
                     break;
                 case "if_icmple":
+                case "if_icmpgt":
                     parseIfICmp(i, sub);
                     break;
                 case "do":
@@ -184,6 +185,12 @@ public class ClassParser {
                     break;
                 case "do_end":
                     sub.finalStack.push("} while(" + oStack.pop().toString() + ");");
+                    break;
+                case "if":
+                    sub.finalStack.push("if (" + oStack.pop().toString() + ") {");
+                    break;
+                case "if_end":
+                    sub.finalStack.push("}");
                     break;
                 default:
                     System.out.println("type not implemented: " + i.type);
@@ -196,6 +203,8 @@ public class ClassParser {
             String item2 = oStack.pop().toString();
             if (i.type.equals("if_icmple")) {
                 oStack.push(item2 + " <= " + item1);
+            } else if (i.type.equals("if_icmpgt")) {
+                oStack.push(item2 + " > " + item1);
             }
         }
         

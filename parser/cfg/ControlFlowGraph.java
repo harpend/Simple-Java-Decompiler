@@ -56,7 +56,7 @@ public class ControlFlowGraph {
         this.instructions.add(i);
         if (cfChange) {
             terminators.add(i.line);
-            if (i.type.equals("if_icmple")) {
+            if (i.type.equals("if_icmple") || i.type.equals("if_icmpgt")) {
                 leaders.add(i.index1);
                 fall.add(i.line);
                 fallThrough = true;
@@ -126,7 +126,7 @@ public class ControlFlowGraph {
                     fallToNext = true;
                 }
 
-                if (t.type.equals("if_icmple")) {
+                if (t.type.equals("if_icmple") || t.type.equals("if_icmpgt")) {
                     BasicBlock bbSwap = this.i2bb.get(t.index1);
                     bb.successors.add(bbSwap);
                     bbSwap.predecessors.add(bb);
@@ -134,7 +134,7 @@ public class ControlFlowGraph {
                     bb.next = i != this.bbList.size() ? this.bbList.get(i+1) : null;
                     bb.TYPE = BasicBlock.TYPE_CONDITIONAL_BRANCH;
                 } else if (t.type.contains("return")) {
-                    bb.TYPE = BasicBlock.TYPE_RETURN;
+                    bb.TYPE = BasicBlock.TYPE_RETURN + BasicBlock.TYPE_STAT;
                 } else {
                     bb.TYPE = BasicBlock.TYPE_STAT;
                     bb.next = i != this.bbList.size() ? this.bbList.get(i+1) : null;
@@ -182,6 +182,7 @@ public class ControlFlowGraph {
     }
 
     public void stringify() {
+        System.out.println("--------------");
         System.out.println("Insert method name:");
         int i = 0;
         for (BasicBlock bb : this.bbList) {
@@ -190,7 +191,8 @@ public class ControlFlowGraph {
             
             i++;
         }
-
+        
+        System.out.println("--------------");
     }
 
     public List<Instruction> getInstructions() {

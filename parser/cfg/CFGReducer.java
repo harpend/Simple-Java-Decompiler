@@ -39,9 +39,8 @@ public class CFGReducer {
             bb.branch = bb.next;
             bb.next = tmp;
         }
-        
+
         if (bb.branch.successors.contains(bb.next)) {
-            System.out.println("9regu");
             // normal if
             BasicBlock ifBB = cfg.newTypeBB(BasicBlock.TYPE_IF);
             for (BasicBlock pred : bb.predecessors) {

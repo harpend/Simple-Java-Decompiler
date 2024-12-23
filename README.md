@@ -7,7 +7,7 @@ This decompiler is written entirely from scratch. For most instructions the proc
 compile with: 
 
 `
-javac main.java parser/*.java parser/ast/*.java parser/cfg/*.java parser/cfg/types/*.java
+javac main.java parser/*.java parser/ast/*.java parser/cfg/*.java parser/cfg/types/*.java parser/statement/*.java parser/cfg/helpers/*.java
 `
 
 run with:
@@ -17,18 +17,25 @@ java Main
 `
 
 ### Stage 1 Deserialisation
-purpose: convert class file into abstract expressions operating on constants.
+Purpose: convert class file into abstract expressions operating on constants.
 The aim is to get it into a format that can be easily parsed.
 
 ### Stage 2 decompile hello world instructions
-this is done by tracking the stack.
+This is done by tracking the stack.
 
-### Stage 3 decompile simple programs from book --Current
-Currently on example 5/10
+### Stage 3 decompile simple programs --Current
+Currently partially decompiles:
+if, do-while
+
+Need to complete support for:
+for, while, if-else, joined if stmts
 
 ### Stage 4 decompile more complicated programs --TODO
+This would add support for:
+n-way conditionals (switch, (if, if-else, else)) and potentially first class functions
 
-### Stage 5 decompile small applications/games --TODO
+### Stage 5 write articles explaining how SJD works --TODO
+Hopefully when this is completed I can write some basic tutorials explaining how Java decompilation works and updating as I gain more knowledge.
 
 ## References
 

@@ -12,6 +12,7 @@ public class BasicBlock {
     public static final int TYPE_START                           = 1;
     public static final int TYPE_END                             = (1 << 1);
     public static final int TYPE_STATEMENTS                      = (1 << 2);
+    public static final int TYPE_STAT                      = (1 << 3);
     public static final int TYPE_RETURN                          = (1 << 4);
     public static final int TYPE_RETURN_VALUE                    = (1 << 5);
     public static final int TYPE_RET                             = (1 << 6);
@@ -134,6 +135,9 @@ public class BasicBlock {
         if (matchType(TYPE_LOOP)) {
             stringifyLoop();
             return;
+        } else if (matchType(TYPE_STATEMENTS)) {
+            stringifyStats();
+            return;
         }
         for (Instruction i : this.instructions) {
             System.out.println("\t" + i.line + " " + i.type + " " + i.index1 + " " + i.index2);
@@ -176,6 +180,30 @@ public class BasicBlock {
         
         System.out.println();
         System.out.println("LOOP END");
+        System.out.println();
+    }
+
+    private void stringifyStats() {
+        System.out.println("STATS:");
+        for (BasicBlock basicBlock : this.subNodes) {
+            System.out.println(basicBlock.id);
+        }
+
+        
+        System.out.println("Predecessors:");
+        for (BasicBlock pred : this.predecessors) {
+            System.out.print(pred.id + " ");
+        }
+        System.out.println();
+
+        System.out.println();
+        System.out.println("Successors:");
+        for (BasicBlock succ : this.successors) {
+            System.out.print(succ.id + " ");
+        }
+        
+        System.out.println();
+        System.out.println("STATS END");
         System.out.println();
     }
 

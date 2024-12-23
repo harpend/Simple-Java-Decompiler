@@ -78,7 +78,6 @@ public class ControlFlowGraph {
         computeDominators();
         this.lhelper = new LoopHelper(this);
         this.lhelper.getLoops();
-        this.bbListPostorder = this.lhelper.getPostorder();
         this.lhelper.reduceLoops();
         this.bbListPostorder = this.lhelper.getPostorder();
         boolean reduced = CFGReducer.reduceCFG(this);
@@ -137,7 +136,7 @@ public class ControlFlowGraph {
                 } else if (t.type.contains("return")) {
                     bb.TYPE = BasicBlock.TYPE_RETURN;
                 } else {
-                    bb.TYPE = BasicBlock.TYPE_STATEMENTS;
+                    bb.TYPE = BasicBlock.TYPE_STAT;
                     bb.next = i != this.bbList.size() ? this.bbList.get(i+1) : null;
                 }
             } else {

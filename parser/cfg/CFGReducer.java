@@ -12,6 +12,7 @@ public class CFGReducer {
             for (BasicBlock bb : cfg.bbListPostorder) {
                 if (bb.successors.size() == 2) {
                     if (bb.matchType(BasicBlock.TYPE_CONDITIONAL_BRANCH)) {
+                        System.out.println("check");
                         changed = reduceConditional(bb, cfg);
                     } else {
                         System.out.println("non conditional branch with 2 successors");
@@ -101,12 +102,13 @@ public class CFGReducer {
     private static boolean reduceConsecutive(BasicBlock bb, ControlFlowGraph cfg) {
         if (bb.successors.size() == 1) {
             for (BasicBlock basicBlock : bb.successors) {
-                if (basicBlock.predecessors.size() != 1 && basicBlock.predecessors.contains(bb)) {
+                if (basicBlock.predecessors.size() != 1 && !basicBlock.predecessors.contains(bb)) {
+                    // 2 -> 6 and not 6 <- 2
                     System.out.println("could not reduce consecutive");
                     System.exit(1);
                 }
             }
-
+            
             BasicBlock statsBB = cfg.newTypeBB(BasicBlock.TYPE_STATEMENTS);
             statsBB.subNodes.addAll(enumerateConsecutives(bb));
             BasicBlock last = statsBB.subNodes.getLast();
@@ -115,7 +117,19 @@ public class CFGReducer {
             cfg.bbListPostorder.removeAll(statsBB.subNodes);
             statsBB.successors.addAll(last.successors);
             statsBB.predecessors.addAll(bb.predecessors);
+            for (BasicBlock basicBlock : bb.predecessors) {
+                basicBlock.successors.remove(bb);
+                basicBlock.successors.add(statsBB);
+            }
+            
             bb.predecessors.clear();
+            BasicBlock lastBB = statsBB.subNodes.getLast();
+            for (BasicBlock basicBlock : lastBB.successors) {
+                basicBlock.successors.remove(lastBB);
+                basicBlock.successors.add(statsBB);
+            }
+
+            lastBB.successors.clear();
             return true;
         }
 

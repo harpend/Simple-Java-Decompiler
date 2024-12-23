@@ -33,7 +33,15 @@ public class CFGReducer {
     }
 
     private static boolean reduceConditional(BasicBlock bb, ControlFlowGraph cfg) {
+        if (bb.branch.matchType(BasicBlock.TYPE_RETURN)) {
+            bb.instructions.getLast().flip();
+            BasicBlock tmp = bb.branch;
+            bb.branch = bb.next;
+            bb.next = tmp;
+        }
+        
         if (bb.branch.successors.contains(bb.next)) {
+            System.out.println("9regu");
             // normal if
             BasicBlock ifBB = cfg.newTypeBB(BasicBlock.TYPE_IF);
             for (BasicBlock pred : bb.predecessors) {
@@ -54,14 +62,6 @@ public class CFGReducer {
             int index = cfg.bbListPostorder.indexOf(bb);
             cfg.bbListPostorder.set(index, ifBB);
             cfg.bbListPostorder.removeAll(ifBB.subNodes);
-            if (bb.branch.matchType(BasicBlock.TYPE_RETURN)) {
-                System.out.println("check");
-                BasicBlock tmp = bb.branch;
-                bb.branch = bb.next;
-                bb.next = tmp;
-            } else {
-                System.out.println("checknot");
-            }
             ifBB.branch = bb.next.branch;
             ifBB.next = bb.next.next;
             bb.branch.instructions.addFirst(new Instruction(0, "if", 0, 0));
@@ -98,15 +98,6 @@ public class CFGReducer {
             }
 
             ifeBB.subNodes.add(bb); ifeBB.subNodes.add(bb.branch); ifeBB.subNodes.add(bb.next);
-            if (bb.branch.matchType(BasicBlock.TYPE_RETURN)) {
-                System.out.println("check");
-                bb.instructions.getLast().flip();
-                BasicBlock tmp = bb.branch;
-                bb.branch = bb.next;
-                bb.next = tmp;
-            } else {
-                System.out.println("checknot");
-            }
             bb.branch.instructions.addFirst(new Instruction(0, "if", 0, 0));
             bb.next.instructions.addFirst(new Instruction(0, "if_end", 0, 0));
             bb.predecessors.clear();

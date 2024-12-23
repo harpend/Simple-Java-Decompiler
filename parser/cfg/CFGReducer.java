@@ -100,6 +100,7 @@ public class CFGReducer {
             ifeBB.subNodes.add(bb); ifeBB.subNodes.add(bb.branch); ifeBB.subNodes.add(bb.next);
             if (bb.branch.matchType(BasicBlock.TYPE_RETURN)) {
                 System.out.println("check");
+                bb.instructions.getLast().flip();
                 BasicBlock tmp = bb.branch;
                 bb.branch = bb.next;
                 bb.next = tmp;

@@ -13,15 +13,12 @@ public class CFGReducer {
             for (BasicBlock bb : cfg.bbListPostorder) {
                 if (bb.successors.size() == 2) {
                     if (bb.matchType(BasicBlock.TYPE_CONDITIONAL_BRANCH)) {
-                        System.out.println("check1");
                         changed = reduceConditional(bb, cfg);
                     } else {
                         System.out.println("non conditional branch with 2 successors");
                         System.exit(1);
                     }
                 } else if (bb.successors.size() == 1) {
-                    System.out.println("check2");
-                    System.out.println(bb.id);
                     changed = reduceConsecutive(bb, cfg);
                 }
             }
@@ -56,20 +53,20 @@ public class CFGReducer {
             bb.next.successors.clear();
             int index = cfg.bbListPostorder.indexOf(bb);
             cfg.bbListPostorder.set(index, ifBB);
-            
-            for (BasicBlock BB : cfg.bbListPostorder) {
-                System.out.println(BB.id);
-            }
             cfg.bbListPostorder.removeAll(ifBB.subNodes);
+            if (bb.branch.matchType(BasicBlock.TYPE_RETURN)) {
+                System.out.println("check");
+                BasicBlock tmp = bb.branch;
+                bb.branch = bb.next;
+                bb.next = tmp;
+            } else {
+                System.out.println("checknot");
+            }
             ifBB.branch = bb.next.branch;
             ifBB.next = bb.next.next;
             bb.branch.instructions.addFirst(new Instruction(0, "if", 0, 0));
             bb.next.instructions.addFirst(new Instruction(0, "if_end", 0, 0));
         } else {
-            cfg.stringify();
-            for (BasicBlock BB : cfg.bbListPostorder) {
-                System.out.println(BB.id);
-            }
             // if-else
             if (bb.next.successors.size() > 1 || bb.branch.successors.size() > 1) {
                 System.out.println("too many successors for branch or next");
@@ -101,6 +98,14 @@ public class CFGReducer {
             }
 
             ifeBB.subNodes.add(bb); ifeBB.subNodes.add(bb.branch); ifeBB.subNodes.add(bb.next);
+            if (bb.branch.matchType(BasicBlock.TYPE_RETURN)) {
+                System.out.println("check");
+                BasicBlock tmp = bb.branch;
+                bb.branch = bb.next;
+                bb.next = tmp;
+            } else {
+                System.out.println("checknot");
+            }
             bb.branch.instructions.addFirst(new Instruction(0, "if", 0, 0));
             bb.next.instructions.addFirst(new Instruction(0, "if_end", 0, 0));
             bb.predecessors.clear();

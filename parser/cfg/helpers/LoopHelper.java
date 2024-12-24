@@ -168,7 +168,7 @@ public class LoopHelper {
                         l.terminator.instructions.addLast(new Instruction(0, "do_end", 0, 0));
                       } else {
                         l.loopType = "pre";
-                        l.header.instructions.addFirst(new Instruction(0, "while", 0, 0));
+                        l.header.instructions.addLast(new Instruction(0, "while", 0, 0));
                         l.terminator.instructions.addLast(new Instruction(0, "while_end", 0, 0));
                     }
                 } else {
@@ -179,7 +179,7 @@ public class LoopHelper {
             } else {
                 if (hExits == 2) {
                     l.loopType = "pre";
-                    l.header.instructions.addFirst(new Instruction(0, "while", 0, 0));
+                    l.header.instructions.addLast(new Instruction(0, "while", 0, 0));
                     l.terminator.instructions.addLast(new Instruction(0, "while_end", 0, 0));
                 } else {
                     l.loopType = "endless";

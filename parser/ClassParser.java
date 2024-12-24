@@ -92,6 +92,9 @@ public class ClassParser {
                 case "dconst_0":
                     oStack.push("0.0");
                     break;
+                case "iconst_1":
+                    oStack.push("1");
+                    break;
                 case "iconst_3":
                     oStack.push("3");
                     break;
@@ -186,11 +189,19 @@ public class ClassParser {
                 case "do_end":
                     sub.finalStack.push("} while(" + oStack.pop().toString() + ");");
                     break;
+                case "while":
+                    sub.finalStack.push("while(" + oStack.pop().toString() + ") {");
+                    break;
+                case "while_end":
+                    sub.finalStack.push("}");
+                    break;
                 case "if":
                     sub.finalStack.push("if (" + oStack.pop().toString() + ") {");
                     break;
                 case "if_end":
                     sub.finalStack.push("}");
+                    break;
+                case "goto":
                     break;
                 default:
                     System.out.println("type not implemented: " + i.type);

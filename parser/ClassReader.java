@@ -658,6 +658,13 @@ public class ClassReader {
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "if_icmple", offset3 +pc, 0), true));
                 pc++;pc++;
                 break;
+                case (byte)0xA7:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                int offset4 = ((b2[0]) << 8) | (b2[1]);
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "goto", offset4 + pc, 0), true));
+                pc++;pc++;
+                break;
                 case (byte)0xAF:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "dreturn", 0, 0), true));
                 break;

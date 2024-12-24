@@ -38,36 +38,39 @@ public class LoopHelper {
     }
 
     public void getLoops() {
-        DFS(this.cfg.head, 0);
+        DFS(this.cfg.head);
         analyseLoops();
         loopTypes();
     }
 
-    private int DFS(BasicBlock bb, int index) {
+    private int current = 0;
+    private void DFS(BasicBlock bb) {
         this.visited.add(bb.id);
-        this.number.put(bb, index);
+        this.number.put(bb, current);
+        System.out.println(bb.id + " " + current);
         this.bbListPreorder.add(bb);
-        this.lastDesc.add(index);
-        int lastVar = index;
+        this.lastDesc.add(current++);
         for (BasicBlock succ : bb.successors) {
             if (!this.visited.contains(succ.id)) {
-                lastVar = DFS(succ, index+1);
+                System.out.println(current);
+                DFS(succ);
             } 
         }
 
         this.bbListPostorder.add(bb);
-        this.lastDesc.set(this.number.get(bb), lastVar);
-        return lastVar;
+        this.lastDesc.set(this.number.get(bb), current-1);
     }
 
     // Havlak-Tarjan
     private void analyseLoops() {
+        System.out.println("------");
         this.LP = new ArrayList<>();
         for (int i = 0; i < this.cfg.bbList.size(); i++) {
             BasicBlock w = this.bbListPreorder.get(i);
             this.backEdges.put(w, new HashSet<>());
             this.otherEdges.put(w, new HashSet<>());
             this.LP.add(new UnionFindNode(w, i));
+            System.out.println(w.id + " " + i);
             for (BasicBlock v : w.predecessors) {
                 if (isAncestor(w, v)) {
                     this.backEdges.get(w).add(v);
@@ -83,6 +86,9 @@ public class LoopHelper {
             List<UnionFindNode> P = new ArrayList<>();
             for (BasicBlock v : this.backEdges.get(w)) {
                 if (!v.equals(w)) {
+                    System.out.println(v.id);
+                    System.out.println(w.id);
+                    System.out.println(this.LP.get(this.number.get(v)).findSet().getBasicBlock().id);
                     P.add(this.LP.get(this.number.get(v)).findSet());
                 } else {
                     w.type = "self";
@@ -120,6 +126,7 @@ public class LoopHelper {
                 this.LP.get(i).setLoop(l);
                 UnionFindNode ufn = this.LP.get(this.number.get(w));
                 for (UnionFindNode x : P) {
+                    // System.out.println(x.getBasicBlock().id);
                     x.union(ufn);
                     if (x.getLoop() != null) {
                         ufn.getLoop().parentLoop = l;
@@ -129,7 +136,6 @@ public class LoopHelper {
                         if (this.backEdges.get(w).contains(bb)) {
                             l.terminator = bb;
                         }
-
                         l.nodesInLoop.add(x.getBasicBlock());
                     }
                 }
@@ -199,6 +205,14 @@ public class LoopHelper {
                 loopBB.predecessors.add(pred);
                 pred.successors.add(loopBB);
                 pred.successors.remove(loop.header);
+            }
+        }
+
+        for (BasicBlock succ : loop.header.successors) {
+            if (!loop.nodesInLoop.contains(succ)) {
+                loopBB.successors.add(succ);
+                succ.predecessors.add(loopBB);
+                succ.predecessors.remove(loop.header);
             }
         }
 

@@ -63,7 +63,9 @@ public class ControlFlowGraph {
             } else if (i.type.contains("invoke")) {
                 fall.add(i.line);
                 fallThrough = true;
-            } 
+            } else if (i.type.equals("goto")) {
+                leaders.add(i.index1);
+            }
         } 
 
         return i;
@@ -79,6 +81,7 @@ public class ControlFlowGraph {
         this.lhelper = new LoopHelper(this);
         this.lhelper.getLoops();
         this.lhelper.reduceLoops();
+        this.stringify();
         this.bbListPostorder = this.lhelper.getPostorder();
         boolean reduced = CFGReducer.reduceCFG(this);
         if (!reduced) {
@@ -91,7 +94,7 @@ public class ControlFlowGraph {
         this.leaders.add(this.instructions.getFirst().line);
         for (Instruction instruction : this.instructions) {
             if (leaders.contains(instruction.line)) {
-                if (this.prevInstruction != null && terminators.add(this.prevInstruction.line)) {
+                if (this.prevInstruction != null && terminators.add(this.prevInstruction.line) && !this.prevInstruction.type.equals("goto")) {
                     this.fall.add(this.prevInstruction.line);
                 }
 
@@ -118,6 +121,7 @@ public class ControlFlowGraph {
                 bb.predecessors.add(this.prevBB);
                 this.prevBB.successors.add(bb);
                 this.prevBB.next = bb;
+                fallToNext = false;
             }
 
             Instruction t = bb.instructions.getLast();
@@ -135,6 +139,12 @@ public class ControlFlowGraph {
                     bb.TYPE = BasicBlock.TYPE_CONDITIONAL_BRANCH;
                 } else if (t.type.contains("return")) {
                     bb.TYPE = BasicBlock.TYPE_RETURN + BasicBlock.TYPE_STAT;
+                } else if (t.type.equals("goto")) {
+                    BasicBlock bbSwap = this.i2bb.get(t.index1);
+                    bb.successors.add(bbSwap);
+                    bbSwap.predecessors.add(bb);
+                    bb.branch = bbSwap;
+                    bb.TYPE = BasicBlock.TYPE_GOTO;
                 } else {
                     bb.TYPE = BasicBlock.TYPE_STAT;
                     bb.next = i != this.bbList.size() ? this.bbList.get(i+1) : null;

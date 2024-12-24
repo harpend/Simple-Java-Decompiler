@@ -18,7 +18,16 @@ public class CFGReducer {
                         System.out.println("non conditional branch with 2 successors");
                         System.exit(1);
                     }
-                } else if (bb.successors.size() == 1) {
+                } else if (bb.predecessors.size() == 1) {
+                    boolean check = false;
+                    for (BasicBlock basicBlock : bb.predecessors)
+                        if (basicBlock.successors.size() != 1) 
+                            check = true;
+
+                    if (check)
+                        continue;
+
+                    System.out.println(bb.id);
                     changed = reduceConsecutive(bb, cfg);
                 }
             }
@@ -111,9 +120,9 @@ public class CFGReducer {
     }
 
     private static boolean reduceConsecutive(BasicBlock bb, ControlFlowGraph cfg) {
-        if (bb.successors.size() == 1) {
-            for (BasicBlock basicBlock : bb.successors) {
-                if (basicBlock.predecessors.size() != 1 && !basicBlock.predecessors.contains(bb)) {
+        if (bb.predecessors.size() == 1) {
+            for (BasicBlock basicBlock : bb.predecessors) {
+                if (basicBlock.successors.size() != 1 && !basicBlock.successors.contains(bb)) {
                     System.out.println("could not reduce consecutive");
                     System.exit(1);
                 }
@@ -123,27 +132,27 @@ public class CFGReducer {
             if (subs.size() <= 1) {
                 return false;
             }
+
             BasicBlock statsBB = cfg.newTypeBB(BasicBlock.TYPE_STATEMENTS);
             statsBB.subNodes.addAll(subs);
             BasicBlock last = statsBB.subNodes.getLast();
-            int index = cfg.bbListPostorder.indexOf(bb);
+            int index = cfg.bbListPostorder.indexOf(last);
             cfg.bbListPostorder.set(index, statsBB);
             cfg.bbListPostorder.removeAll(statsBB.subNodes);
-            statsBB.successors.addAll(last.successors);
-            statsBB.predecessors.addAll(bb.predecessors);
-            for (BasicBlock basicBlock : bb.predecessors) {
+            statsBB.successors.addAll(bb.successors);
+            statsBB.predecessors.addAll(last.predecessors);
+            for (BasicBlock basicBlock : bb.successors) {
                 basicBlock.successors.remove(bb);
                 basicBlock.successors.add(statsBB);
             }
             
-            bb.predecessors.clear();
-            BasicBlock lastBB = statsBB.subNodes.getLast();
-            for (BasicBlock basicBlock : lastBB.successors) {
-                basicBlock.successors.remove(lastBB);
-                basicBlock.successors.add(statsBB);
+            bb.successors.clear();
+            for (BasicBlock basicBlock : last.predecessors) {
+                basicBlock.predecessors.remove(last);
+                basicBlock.predecessors.add(statsBB);
             }
 
-            lastBB.successors.clear();
+            last.predecessors.clear();
             return true;
         }
 
@@ -158,9 +167,9 @@ public class CFGReducer {
         BasicBlock tmp = bb;
         while (tmp.successors.size() <= 1 && check) {
             check = false;
-            consecBlocks.add(tmp);
-            for (BasicBlock basicBlock : tmp.successors) {
-                if (basicBlock.predecessors.size() == 1 && basicBlock.predecessors.contains(tmp)) {
+            consecBlocks.add(tmp);System.out.println(tmp.id);
+            for (BasicBlock basicBlock : tmp.predecessors) {
+                if (basicBlock.successors.size() == 1 && basicBlock.successors.contains(tmp)) {
                     tmp = basicBlock;
                     check = true;
                 }

@@ -86,9 +86,6 @@ public class LoopHelper {
             List<UnionFindNode> P = new ArrayList<>();
             for (BasicBlock v : this.backEdges.get(w)) {
                 if (!v.equals(w)) {
-                    System.out.println(v.id);
-                    System.out.println(w.id);
-                    System.out.println(this.LP.get(this.number.get(v)).findSet().getBasicBlock().id);
                     P.add(this.LP.get(this.number.get(v)).findSet());
                 } else {
                     w.type = "self";

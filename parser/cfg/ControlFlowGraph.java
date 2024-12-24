@@ -57,6 +57,7 @@ public class ControlFlowGraph {
         if (cfChange) {
             terminators.add(i.line);
             if (i.type.equals("if_icmple") || i.type.equals("if_icmpgt")) {
+                System.out.println(i.type);
                 leaders.add(i.index1);
                 fall.add(i.line);
                 fallThrough = true;
@@ -81,7 +82,6 @@ public class ControlFlowGraph {
         this.lhelper = new LoopHelper(this);
         this.lhelper.getLoops();
         this.lhelper.reduceLoops();
-        this.stringify();
         this.bbListPostorder = this.lhelper.getPostorder();
         boolean reduced = CFGReducer.reduceCFG(this);
         if (!reduced) {

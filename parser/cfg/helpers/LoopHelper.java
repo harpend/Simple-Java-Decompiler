@@ -47,12 +47,10 @@ public class LoopHelper {
     private void DFS(BasicBlock bb) {
         this.visited.add(bb.id);
         this.number.put(bb, current);
-        System.out.println(bb.id + " " + current);
         this.bbListPreorder.add(bb);
         this.lastDesc.add(current++);
         for (BasicBlock succ : bb.successors) {
             if (!this.visited.contains(succ.id)) {
-                System.out.println(current);
                 DFS(succ);
             } 
         }
@@ -63,14 +61,12 @@ public class LoopHelper {
 
     // Havlak-Tarjan
     private void analyseLoops() {
-        System.out.println("------");
         this.LP = new ArrayList<>();
         for (int i = 0; i < this.cfg.bbList.size(); i++) {
             BasicBlock w = this.bbListPreorder.get(i);
             this.backEdges.put(w, new HashSet<>());
             this.otherEdges.put(w, new HashSet<>());
             this.LP.add(new UnionFindNode(w, i));
-            System.out.println(w.id + " " + i);
             for (BasicBlock v : w.predecessors) {
                 if (isAncestor(w, v)) {
                     this.backEdges.get(w).add(v);
@@ -168,6 +164,7 @@ public class LoopHelper {
                         l.terminator.instructions.addLast(new Instruction(0, "do_end", 0, 0));
                       } else {
                         l.loopType = "pre";
+                        l.header.instructions.getLast().flip();
                         l.header.instructions.addLast(new Instruction(0, "while", 0, 0));
                         l.terminator.instructions.addLast(new Instruction(0, "while_end", 0, 0));
                     }
@@ -179,6 +176,7 @@ public class LoopHelper {
             } else {
                 if (hExits == 2) {
                     l.loopType = "pre";
+                    l.header.instructions.getLast().flip();
                     l.header.instructions.addLast(new Instruction(0, "while", 0, 0));
                     l.terminator.instructions.addLast(new Instruction(0, "while_end", 0, 0));
                 } else {

@@ -27,7 +27,6 @@ public class CFGReducer {
                     if (check)
                         continue;
 
-                    System.out.println(bb.id);
                     changed = reduceConsecutive(bb, cfg);
                 }
             }

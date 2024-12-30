@@ -16,7 +16,7 @@ public class ClassParser {
 
         public parser.ast.ClassDeclaration ParseClass() {
             this.cr = new ClassReader();
-            cr.ReadClass("./tests/class/basicWhile.class");
+            cr.ReadClass("./tests/class/doubleWhile.class");
             String flags = String.join(" ", this.cr.accessFlags);
             String name = this.cr.ResolveCPIndex(this.cr.thisClass);
             List<parser.ast.Subroutine> s = parseSubroutines();
@@ -72,6 +72,7 @@ public class ClassParser {
                 case "aload_0":
                 case "iload_0":
                 case "iload_1":
+                case "iload_2":
                 case "iload_3":
                 case "dload_1":
                     if (i.index1 > sub.localCount-1){
@@ -92,8 +93,14 @@ public class ClassParser {
                 case "dconst_0":
                     oStack.push("0.0");
                     break;
+                case "iconst_0":
+                    oStack.push("0");
+                    break;
                 case "iconst_1":
                     oStack.push("1");
+                    break;
+                case "iconst_2":
+                    oStack.push("2");
                     break;
                 case "iconst_3":
                     oStack.push("3");
@@ -102,6 +109,7 @@ public class ClassParser {
                     oStack.push("5");
                     break;
                 case "istore_1":
+                case "istore_2":
                 case "istore_3":
                 case "dstore":
                 case "dstore_1":

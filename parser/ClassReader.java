@@ -436,6 +436,10 @@ public class ClassReader {
             List<Integer> frameElems = new ArrayList<>();
 
             switch (frameType) {
+                case 248:
+                case 249:
+                case 250:  
+                    break;
                 case 252:
                 case 253:
                 case 254:
@@ -578,6 +582,9 @@ public class ClassReader {
                 case (byte)0x1B:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "iload_1", 1, 0), false));
                 break;
+                case (byte)0x1C:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iload_2", 2, 0), false));
+                break;
                 case (byte)0x1D:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "iload_3", 3, 0), false));
                 break;
@@ -603,6 +610,9 @@ public class ClassReader {
                 break;
                 case (byte)0x3C:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "istore_1", 1, 0), false));
+                break;
+                case (byte)0x3D:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "istore_2", 2, 0), false));
                 break;
                 case (byte)0x3E:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "istore_3", 3, 0), false));

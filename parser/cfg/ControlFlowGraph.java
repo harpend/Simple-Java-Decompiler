@@ -57,7 +57,6 @@ public class ControlFlowGraph {
         if (cfChange) {
             terminators.add(i.line);
             if (i.type.equals("if_icmple") || i.type.equals("if_icmpgt")) {
-                System.out.println(i.type);
                 leaders.add(i.index1);
                 fall.add(i.line);
                 fallThrough = true;

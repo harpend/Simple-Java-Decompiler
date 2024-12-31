@@ -626,6 +626,9 @@ public class ClassReader {
                 case (byte)0x63:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "dadd", 0, 0), false));
                 break;
+                case (byte)0x64:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "isub", 0, 0), false));
+                break;
                 case (byte)0x68:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "imul", 0, 0), false));
                 break;
@@ -674,6 +677,9 @@ public class ClassReader {
                 int offset4 = ((b2[0]) << 8) | (b2[1]);
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "goto", offset4 + pc, 0), true));
                 pc++;pc++;
+                break;
+                case (byte)0xAC:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "ireturn", 0, 0), true));
                 break;
                 case (byte)0xAF:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "dreturn", 0, 0), true));

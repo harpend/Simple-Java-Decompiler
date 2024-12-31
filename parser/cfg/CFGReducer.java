@@ -14,6 +14,8 @@ public class CFGReducer {
                 if (bb.successors.size() == 2) {
                     if (bb.matchType(BasicBlock.TYPE_CONDITIONAL_BRANCH)) {
                         changed = reduceConditional(bb, cfg);
+                        if (changed)
+                            break;
                     } else {
                         System.out.println("non conditional branch with 2 successors");
                         System.exit(1);
@@ -21,13 +23,15 @@ public class CFGReducer {
                 } else if (bb.predecessors.size() == 1) {
                     boolean check = false;
                     for (BasicBlock basicBlock : bb.predecessors)
-                        if (basicBlock.successors.size() != 1) 
+                        if (basicBlock.successors.size() != 1)
                             check = true;
 
                     if (check)
                         continue;
 
                     changed = reduceConsecutive(bb, cfg);
+                    if (changed)
+                            break;
                 }
             }
         }
@@ -166,7 +170,7 @@ public class CFGReducer {
         BasicBlock tmp = bb;
         while (tmp.successors.size() <= 1 && check) {
             check = false;
-            consecBlocks.add(tmp);System.out.println(tmp.id);
+            consecBlocks.add(tmp);
             for (BasicBlock basicBlock : tmp.predecessors) {
                 if (basicBlock.successors.size() == 1 && basicBlock.successors.contains(tmp)) {
                     tmp = basicBlock;

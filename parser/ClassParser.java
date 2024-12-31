@@ -16,7 +16,7 @@ public class ClassParser {
 
         public parser.ast.ClassDeclaration ParseClass() {
             this.cr = new ClassReader();
-            cr.ReadClass("./tests/class/doubleWhile.class");
+            cr.ReadClass("./tests/class/factorial.class");
             String flags = String.join(" ", this.cr.accessFlags);
             String name = this.cr.ResolveCPIndex(this.cr.thisClass);
             List<parser.ast.Subroutine> s = parseSubroutines();
@@ -131,6 +131,12 @@ public class ClassParser {
                 case "return":
                     sub.finalStack.push("return;");
                     break;
+                case "ireturn":
+                    if (!oStack.empty()) {
+                        s = oStack.pop().toString();
+                        sub.finalStack.push("return " + s + ";");
+                    }
+                    break;
                 case "dreturn":
                     if (!oStack.empty()) {
                         s = oStack.pop().toString();
@@ -166,6 +172,7 @@ public class ClassParser {
                         }
                     }
                     break;
+                case "isub":
                 case "imul":
                 case "idiv":
                     String opString = "";
@@ -173,20 +180,23 @@ public class ClassParser {
                         opString = "*";
                     } else if (i.type.equals("idiv")) {
                         opString = "/";
-                    }
+                    } else if (i.type.equals("isub")) {
+                        opString = "-";
+                    } 
                     temp = oStack.pop();
                     if (temp.toString().indexOf("+") == -1 && temp.toString().indexOf("-") == -1 && temp.toString().indexOf("*") == -1 && temp.toString().indexOf("/") == -1 && oStack.peek().toString().indexOf("+") == -1 && oStack.peek().toString().indexOf("-") == -1 && oStack.peek().toString().indexOf("*") == -1 && oStack.peek().toString().indexOf("/") == -1)
-                        oStack.push(oStack.pop().toString() + " * " + temp.toString()); 
+                        oStack.push(oStack.pop().toString() + " " + opString + " " + temp.toString());
                     else if (temp.toString().indexOf("+") == -1 && temp.toString().indexOf("-") == -1 && temp.toString().indexOf("*") == -1 && temp.toString().indexOf("/") == -1)
                         oStack.push("(" + oStack.pop().toString() + ") " + opString + temp.toString()); 
                     else if (oStack.peek().toString().indexOf("+") == -1 && oStack.peek().toString().indexOf("-") == -1 && oStack.peek().toString().indexOf("*") == -1 && oStack.peek().toString().indexOf("/") == -1 )
-                        oStack.push(oStack.pop().toString() + opString + " (" + temp.toString()+") "); 
+                        oStack.push(oStack.pop().toString() + " " + opString + " (" + temp.toString()+") "); 
                     else 
                         oStack.push("(" + oStack.pop().toString() + ") " + opString + " (" + temp.toString()+")"); 
                     break;
                 case "dadd":
                     oStack.push(oStack.pop().toString() + " + " + oStack.pop().toString());
                     break;
+            
                 case "if_icmple":
                 case "if_icmpgt":
                     parseIfICmp(i, sub);

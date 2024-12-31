@@ -10,6 +10,7 @@ import java.util.Hashtable;
 import java.util.List;
 
 import jdk.jfr.Unsigned;
+import parser.ClassReader.ParamType;
 import parser.cfg.ControlFlowGraph;
 
 public class ClassReader {
@@ -814,6 +815,10 @@ public class ClassReader {
         return tempString;
     }
 
+    public enum ParamType {
+        INT, BYTE, CHAR, DOUBLE, FLOAT, LONG, SHORT, BOOL, VOID, REF, ARRAY
+    }
+
     public List<String> ResolveMethodParams(int index) {
         Dictionary<String, String> cpEntry = this.constantPool.get(index - 1);
         String type = cpEntry.get("tag");
@@ -829,37 +834,74 @@ public class ClassReader {
             } else if (c == '(') {
                 continue;
             }
-            params.add(getParam(c, tempString, i));
+
+            switch (getParam(c)) {
+                case ParamType.ARRAY:
+                    c = tempString.charAt(++i);
+                    if (getParam(c).equals(ParamType.REF)) {
+                        String ref = extractRefType(tempString, ++i);
+                        params.add(ref+"[]");
+                        i += ref.length();
+                    } else {
+                        params.add(getParam(c).toString().toLowerCase() + "[]");
+                    }
+                    break;
+                case ParamType.REF:
+                    String ref = extractRefType(tempString, ++i);
+                    params.add(ref);
+                    i += ref.length();
+                    break;
+                default:
+                    params.add(getParam(c).toString());
+            }
         }
         return params;
     }
 
-    private String getParam(char c, String s, int i) {
+    private ParamType getParam(char c) {
         // make this into a lexer
         switch (c) {
             case 'I':
-                return "int";
+                return ParamType.INT;
             case 'B':
-                return "byte";
+                return ParamType.BYTE;
             case 'C':
-                return "char";
+                return ParamType.CHAR;
             case 'D':
-                return "double";
+                return ParamType.DOUBLE;
             case 'F':
-                return "float";
+                return ParamType.FLOAT;
             case 'J':
-                return "long";
+                return ParamType.LONG;
             case 'S':
-                return "short";
+                return ParamType.SHORT;
             case 'Z':
-                return "boolean";
+                return ParamType.BOOL;
             case 'V':
-                return "";
+                return ParamType.VOID;
+            case '[':
+                return ParamType.ARRAY;
+            case 'L':
+                return ParamType.REF;
             default:
-            System.out.println("unsupported type " + c);
+                System.out.println("unsupported type " + c);
                 throw new AssertionError();
         }
     }
+
+    private String extractRefType(String s, int i) {
+        String ref = "";
+        while (s.charAt(i) != ';') {
+            ref += s.charAt(i++);
+        }
+
+        int lastSlashIndex = ref.lastIndexOf('/');
+        if (lastSlashIndex != -1) {
+            return ref.substring(lastSlashIndex + 1, i - 1);
+        }
+        return ref;
+    }
+
     private int getByte() throws IOException {
         byte[] b = new byte[1];
         fis.read(b);

@@ -16,7 +16,7 @@ public class ClassParser {
 
         public parser.ast.ClassDeclaration ParseClass() {
             this.cr = new ClassReader();
-            cr.ReadClass("./tests/class/factorial.class");
+            cr.ReadClass("./tests/class/addFunc.class");
             String flags = String.join(" ", this.cr.accessFlags);
             String name = this.cr.ResolveCPIndex(this.cr.thisClass);
             List<parser.ast.Subroutine> s = parseSubroutines();
@@ -172,6 +172,7 @@ public class ClassParser {
                         }
                     }
                     break;
+                case "iadd":
                 case "isub":
                 case "imul":
                 case "idiv":
@@ -182,7 +183,9 @@ public class ClassParser {
                         opString = "/";
                     } else if (i.type.equals("isub")) {
                         opString = "-";
-                    } 
+                    } else {
+                        opString = "+";
+                    }
                     temp = oStack.pop();
                     if (temp.toString().indexOf("+") == -1 && temp.toString().indexOf("-") == -1 && temp.toString().indexOf("*") == -1 && temp.toString().indexOf("/") == -1 && oStack.peek().toString().indexOf("+") == -1 && oStack.peek().toString().indexOf("-") == -1 && oStack.peek().toString().indexOf("*") == -1 && oStack.peek().toString().indexOf("/") == -1)
                         oStack.push(oStack.pop().toString() + " " + opString + " " + temp.toString());
@@ -247,8 +250,16 @@ public class ClassParser {
                 oStack.pop();
             } else if (i.type.equals("invokestatic")) {
                 // need to resolve type index string so that it can be stored as long as it isn't void
-                String c = oStack.pop().toString();
+                List<String> types = this.cr.ResolveMethodParams(i.index1);
+                String c = "";
+                for (String s : types) {
+                    c = oStack.pop().toString() + ", " + c;
+                }
+
+                if (types.size() > 0)
+                    c = c.substring(0, c.length() - 2);
                 String s = this.cr.ResolveCPIndex(i.index1);
+                // add calculation for number of parameters
                 if (resolveType(s).equals("void")) {
                     sub.finalStack.push(s + "(" + c + ");");
                 } else {

@@ -623,6 +623,9 @@ public class ClassReader {
                 case (byte)0x49:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "dstore_2", 2, 0), false));
                 break;
+                case (byte)0x60:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "iadd", 0, 0), false));
+                break;
                 case (byte)0x63:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "dadd", 0, 0), false));
                 break;
@@ -811,6 +814,52 @@ public class ClassReader {
         return tempString;
     }
 
+    public List<String> ResolveMethodParams(int index) {
+        Dictionary<String, String> cpEntry = this.constantPool.get(index - 1);
+        String type = cpEntry.get("tag");
+        int nameAndTypeIndex = Integer.parseInt(cpEntry.get("name_and_type_index"));
+        cpEntry = this.constantPool.get(nameAndTypeIndex - 1);
+        int typeIndex = Integer.parseInt(cpEntry.get("descriptor_index"));
+        String tempString = ResolveCPIndex(typeIndex);
+        List<String> params = new ArrayList<>();
+        for (int i = 0; i < tempString.length(); i++) {
+            char c = tempString.charAt(i);
+            if (c == ')') {
+                break;
+            } else if (c == '(') {
+                continue;
+            }
+            params.add(getParam(c, tempString, i));
+        }
+        return params;
+    }
+
+    private String getParam(char c, String s, int i) {
+        // make this into a lexer
+        switch (c) {
+            case 'I':
+                return "int";
+            case 'B':
+                return "byte";
+            case 'C':
+                return "char";
+            case 'D':
+                return "double";
+            case 'F':
+                return "float";
+            case 'J':
+                return "long";
+            case 'S':
+                return "short";
+            case 'Z':
+                return "boolean";
+            case 'V':
+                return "";
+            default:
+            System.out.println("unsupported type " + c);
+                throw new AssertionError();
+        }
+    }
     private int getByte() throws IOException {
         byte[] b = new byte[1];
         fis.read(b);

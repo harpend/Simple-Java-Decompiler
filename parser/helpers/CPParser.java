@@ -26,7 +26,12 @@ public class CPParser {
     }
 
     private void term() {
-        match(Token.Terminal.CLASS); match(Token.Terminal.SC);
+        match(Token.Terminal.CLASS); 
+        if (lookahead.terminal == Token.Terminal.LA) {
+            match(Token.Terminal.LA); term(); match(Token.Terminal.RA);
+        }
+        
+        match(Token.Terminal.SC);
         if (lookahead.terminal == Token.Terminal.CLASS) {
             term();
         }

@@ -10,33 +10,37 @@ public class CPLexer {
     }
 
     public Token nextToken() {
-        peek = this.cpString.charAt(index++);
-        if (index + 1 < this.cpString.length()) {
-            peek = this.cpString.charAt(index++);
+        if (index < this.cpString.length()) {
+            peek = this.cpString.charAt(index);
         } else {
             return new Token(Token.Terminal.END, "");
         }
 
-        if (Character.isAlphabetic(peek)) {
+        if ((peek >= 'a' && peek <= 'z') || (peek >= 'A' && peek <= 'Z')) {
             StringBuffer b = new StringBuffer();
             do { 
                 b.append(peek);
                 if (index + 1 < this.cpString.length()) {
-                    peek = this.cpString.charAt(index++);
+                    peek = this.cpString.charAt(++index);
                 } else {
                     break;
                 }
-            } while (Character.isAlphabetic(peek) || peek == '/');
+            } while ((peek >= 'a' && peek <= 'z') || (peek >= 'A' && peek <= 'Z') || peek == '/');
 
             return new Token(Token.Terminal.CLASS, b.toString());
         } else if (peek == ';') {
+            index++;
             return new Token(Token.Terminal.SC, ";");
         } else if (peek == '<') {
+            index++;
             return new Token(Token.Terminal.LA, "<");
         } else if (peek == '>') {
+            index++;
             return new Token(Token.Terminal.RA, ">");
         }
-
+        
+        System.out.print( "ERR Token - CPLexer");
+        System.exit(1);
         return new Token(Token.Terminal.ERR, "");
     }
 }

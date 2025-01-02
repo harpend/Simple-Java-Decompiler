@@ -9,6 +9,7 @@ public class CPParser {
     public CPParser(String s) {
         this.cpString = s;
         this.lexer = new CPLexer(s);
+        this.type = new StringBuffer();
     }
 
     public void parse() {
@@ -22,6 +23,8 @@ public class CPParser {
             match(Token.Terminal.SC);
         } else if (lookahead.terminal == Token.Terminal.LA) {
             match(Token.Terminal.LA); term(); match(Token.Terminal.RA); match(Token.Terminal.SC);
+        } else {
+            System.out.println(lookahead.terminal);
         }
     }
 
@@ -30,7 +33,7 @@ public class CPParser {
         if (lookahead.terminal == Token.Terminal.LA) {
             match(Token.Terminal.LA); term(); match(Token.Terminal.RA);
         }
-        
+
         match(Token.Terminal.SC);
         if (lookahead.terminal == Token.Terminal.CLASS) {
             term();
@@ -41,11 +44,16 @@ public class CPParser {
         if (t == lookahead.terminal) {
             if (t == Token.Terminal.CLASS) {
                 this.type.append(extractName(lookahead.value));
+                lookahead = lexer.nextToken();
+            } else if (t == Token.Terminal.SC) {
+                lookahead = lexer.nextToken();
+                if (lookahead.terminal == Token.Terminal.CLASS) {
+                    this.type.append(", ");
+                }
             } else {
                 this.type.append(lookahead.value);
+                lookahead = lexer.nextToken();
             }
-
-            lookahead = lexer.nextToken();
         } else {
             System.out.println("Failed match");
             System.exit(1);
@@ -60,6 +68,7 @@ public class CPParser {
 
         return s;
     }
+
     public String getType() {
         return this.type.toString();
     }

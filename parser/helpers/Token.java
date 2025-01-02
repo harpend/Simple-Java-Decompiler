@@ -2,7 +2,7 @@ package parser.helpers;
 
 public class Token {
     public enum Terminal {
-        CLASS, LA, RA, SC
+        CLASS, LA, RA, SC, ERR
     }
 
     public Terminal terminal;

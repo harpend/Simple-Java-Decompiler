@@ -70,6 +70,10 @@ public class ClassParser {
             String stype = "";
             switch (i.type) {
                 case "aload_0":
+                    if (sub.name.equals("<init>")) {
+                        oStack.push("this.");
+                        break;
+                    }
                 case "iload_0":
                 case "iload_1":
                 case "iload_2":
@@ -223,6 +227,31 @@ public class ClassParser {
                     sub.finalStack.push("}");
                     break;
                 case "goto":
+                    break;
+                case "pop":
+                    oStack.pop();
+                    break;
+                case "dup":
+                    oStack.push(oStack.peek());
+                    break;
+                case "new":
+                    s = this.cr.ResolveCPIndex(i.index1);
+                    int lastSlashIndex = s.lastIndexOf('/');
+                    if (lastSlashIndex != -1) {
+                        s = s.substring(lastSlashIndex + 1, s.length());
+                    }
+
+                    oStack.push(s);
+                    break;
+                case "putfield":
+                case "getfield":
+                    s = this.cr.ResolveCPIndex(i.index1);
+                    int lastDotIndex = s.lastIndexOf('.');
+                    if (lastDotIndex != -1) {
+                        s = s.substring(lastDotIndex + 1, s.length());
+                    }
+                    
+                    oStack.push(s);
                     break;
                 default:
                     System.out.println("type not implemented: " + i.type);

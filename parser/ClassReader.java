@@ -399,6 +399,10 @@ public class ClassReader {
                 int sfIndex = getShort();
                 el.put("sourcefile_index", sfIndex);
             }
+            else if (Arrays.equals(resolveNameIndex(attributeNameIndex), "Signature".getBytes(StandardCharsets.UTF_8))) {
+                int sfIndex = getShort();
+                el.put("signature_index", sfIndex);
+            }
             else {
                 System.out.println("attribute type not implemented");
                 System.out.println(new String(resolveNameIndex(attributeNameIndex), StandardCharsets.UTF_8));
@@ -624,6 +628,12 @@ public class ClassReader {
                 case (byte)0x49:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "dstore_2", 2, 0), false));
                 break;
+                case (byte)0x57:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "pop", 0, 0), false));
+                break;
+                case (byte)0x59:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dup", 0, 0), false));
+                break;
                 case (byte)0x60:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "iadd", 0, 0), false));
                 break;
@@ -697,6 +707,18 @@ public class ClassReader {
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "getstatic", concatByteToInt(b2), 0), false));
                 pc++;pc++;
                 break;    
+                case (byte)0xB4:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "getfield", concatByteToInt(b2), 0), true));
+                pc++;pc++;
+                break;    
+                case (byte)0xB5:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "putfield", concatByteToInt(b2), 0), true));
+                pc++;pc++;
+                break;    
                 case (byte)0xB6:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
@@ -713,6 +735,12 @@ public class ClassReader {
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "invokestatic", concatByteToInt(b2), 0), true));
+                pc++;pc++;
+                break;    
+                case (byte)0xBB:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "new", concatByteToInt(b2), 0), true));
                 pc++;pc++;
                 break;    
             default:

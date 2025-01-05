@@ -1,13 +1,11 @@
 package parser.helpers;
 
 public class CPParser {
-    private String cpString = "";
     private StringBuffer type;
     private CPLexer lexer;
     private Token lookahead;
     
     public CPParser(String s) {
-        this.cpString = s;
         this.lexer = new CPLexer(s);
         this.type = new StringBuffer();
     }

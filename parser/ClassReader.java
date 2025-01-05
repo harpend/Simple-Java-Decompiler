@@ -274,9 +274,6 @@ public class ClassReader {
 
             element.put("attributes", attrList);
             list.add(element);
-
-            element.put("attributes", attrList);
-            list.add(element);
         }
 
         this.fields = list;
@@ -411,6 +408,8 @@ public class ClassReader {
 
             el.put("attribute_name_index", attributeNameIndex);
             el.put("attribute_length", attributeLength);
+            System.out.println(el);
+            System.out.println();
             attrList.add(el);
         }
 
@@ -845,6 +844,36 @@ public class ClassReader {
 
     public enum ParamType {
         INT, BYTE, CHAR, DOUBLE, FLOAT, LONG, SHORT, BOOL, VOID, REF, ARRAY
+    }
+
+    public int countParams(int index) {
+        int count = 0;
+        Dictionary<String, String> cpEntry = this.constantPool.get(index - 1);
+        String type = cpEntry.get("tag");
+        int nameAndTypeIndex = Integer.parseInt(cpEntry.get("name_and_type_index"));
+        cpEntry = this.constantPool.get(nameAndTypeIndex - 1);
+        int typeIndex = Integer.parseInt(cpEntry.get("descriptor_index"));
+        String tempString = ResolveCPIndex(typeIndex);
+        List<String> params = new ArrayList<>();
+        for (int i = 0; i < tempString.length(); i++) {
+            char c = tempString.charAt(i);
+            if (c == ')') {
+                break;
+            } else if (c == '(') {
+                continue;
+            }
+
+            ParamType pt = getParam(c);
+            if (pt == ParamType.REF) {
+                do { 
+                    c = tempString.charAt(++i);
+                } while (c != ';');
+            }
+
+            count++;
+        }
+
+        return count;
     }
 
     public List<String> ResolveMethodParams(int index) {

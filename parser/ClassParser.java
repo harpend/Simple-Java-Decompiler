@@ -20,7 +20,7 @@ public class ClassParser {
             String flags = String.join(" ", this.cr.accessFlags);
             String name = this.cr.ResolveCPIndex(this.cr.thisClass);
             List<parser.ast.Subroutine> s = parseSubroutines();
-            return new ClassDeclaration(flags, name, s);
+            return new ClassDeclaration(flags, name, s, cr);
         }
 
         private List<Subroutine> parseSubroutines() {
@@ -229,7 +229,9 @@ public class ClassParser {
                 case "goto":
                     break;
                 case "pop":
-                    oStack.pop();
+                    if (!oStack.isEmpty()) {
+                        oStack.pop();
+                    }
                     break;
                 case "dup":
                     oStack.push(oStack.peek());
@@ -241,17 +243,27 @@ public class ClassParser {
                         s = s.substring(lastSlashIndex + 1, s.length());
                     }
 
-                    oStack.push(s);
+                    oStack.push("new " + s);
                     break;
                 case "putfield":
-                case "getfield":
                     s = this.cr.ResolveCPIndex(i.index1);
                     int lastDotIndex = s.lastIndexOf('.');
                     if (lastDotIndex != -1) {
                         s = s.substring(lastDotIndex + 1, s.length());
                     }
                     
-                    oStack.push(s);
+                    String ref = oStack.pop().toString();
+                    String val = oStack.pop().toString();
+                    sub.finalStack.push(val + s + " = " + ref + "<>();");
+                    break;
+                case "getfield":
+                    s = this.cr.ResolveCPIndex(i.index1);
+                    int lastDotIndex2 = s.lastIndexOf('.');
+                    if (lastDotIndex2 != -1) {
+                        s = s.substring(lastDotIndex2 + 1, s.length());
+                    }
+                    
+                    oStack.push(oStack.pop() + s);
                     break;
                 default:
                     System.out.println("type not implemented: " + i.type);
@@ -271,10 +283,23 @@ public class ClassParser {
         
         private void parseInvoke(Instruction i, Subroutine sub) {
             if (i.type.equals("invokevirtual")) {
-                String c = oStack.pop().toString();
-                String l = oStack.pop().toString().replace("java/lang/", "");
+                String c = "";
+                for (int x = 0; x < this.cr.countParams(i.index1); x++) {
+                    c = c + oStack.pop().toString() + ", ";
+                }
+
+                if (c.length() > 0)
+                    c = c.substring(0, c.length() - 2);
+
+                String l = oStack.pop().toString();
+                int lastSlashIndex = l.lastIndexOf('/');
+                    if (lastSlashIndex != -1) {
+                        l = l.substring(lastSlashIndex + 1, l.length());
+                    }
                 String s = this.cr.ResolveCPIndex(i.index1);
                 sub.finalStack.push(l + "." + s + "(" + c + ")" + ";");
+                // TODO: count the number of parameters an pop off each one, this can be done by
+                // the parser I am working on
             } else if (i.type.equals("invokespecial")) {
                 oStack.pop();
             } else if (i.type.equals("invokestatic")) {

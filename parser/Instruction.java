@@ -20,6 +20,12 @@ public class Instruction {
             case "if_icmpgt":
                 this.type = "if_icmple";
                 break;
+            case "ifle":
+                this.type = "ifgt";
+                break;
+            case "ifge":
+                this.type = "iflt";
+                break;
             default:
                 System.out.println("this instruction cannot be flipped: " + this.type);
                 System.exit(1);

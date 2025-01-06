@@ -45,7 +45,7 @@ public class CFGReducer {
     }
 
     private static boolean reduceConditional(BasicBlock bb, ControlFlowGraph cfg) {
-        if (bb.branch.matchType(BasicBlock.TYPE_RETURN)) {
+        if (bb.branch.matchType(BasicBlock.TYPE_RETURN) || bb.branch.matchType(BasicBlock.TYPE_END)) {
             bb.instructions.getLast().flip();
             BasicBlock tmp = bb.branch;
             bb.branch = bb.next;
@@ -80,6 +80,7 @@ public class CFGReducer {
         } else {
             // if-else
             if (bb.next.successors.size() > 1 || bb.branch.successors.size() > 1) {
+                cfg.stringify();
                 System.out.println("too many successors for branch or next");
                 System.exit(1);
             } else if (bb.next.successors.size() == 1 && bb.branch.successors.size() == 1) {

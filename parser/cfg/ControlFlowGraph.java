@@ -33,6 +33,7 @@ public class ControlFlowGraph {
     private Map<Integer, BitSet> dominaterMap;
     public List<Loop> loopList;
     private LoopHelper lhelper;
+    private BasicBlock endBB;
 
     public ControlFlowGraph(Dictionary<String, Object> method) {
         this.method = method;
@@ -56,7 +57,9 @@ public class ControlFlowGraph {
         this.instructions.add(i);
         if (cfChange) {
             terminators.add(i.line);
-            if (i.type.equals("if_icmple") || i.type.equals("if_icmpgt")) {
+            if (i.type.equals("if_icmple") || i.type.equals("if_icmpgt") ||
+                i.type.equals("ifge") || i.type.equals("ifgt") ||
+                i.type.equals("ifle") || i.type.equals("iflt")) {
                 leaders.add(i.index1);
                 fall.add(i.line);
                 fallThrough = true;
@@ -129,12 +132,22 @@ public class ControlFlowGraph {
                     fallToNext = true;
                 }
 
-                if (t.type.equals("if_icmple") || t.type.equals("if_icmpgt")) {
+                if (t.type.equals("if_icmple") || t.type.equals("if_icmpgt") ||
+                    t.type.equals("ifge") || t.type.equals("ifgt") ||
+                    t.type.equals("ifle") || t.type.equals("iflt")) {
                     BasicBlock bbSwap = this.i2bb.get(t.index1);
+                    if (bbSwap == null) {
+                        bbSwap = newTypeBB(BasicBlock.TYPE_END);
+                        bbSwap.instructions.add(new Instruction(t.index1, "nop", i, i));
+                        bbSwap.type = "end";
+                        this.bbList.add(bbSwap);
+                        this.terminators.add(t.index1);
+                    }
+
                     bb.successors.add(bbSwap);
                     bbSwap.predecessors.add(bb);
                     bb.branch = bbSwap;
-                    bb.next = i != this.bbList.size() ? this.bbList.get(i+1) : null;
+                    bb.next = i + 1 != this.bbList.size() ? this.bbList.get(i+1) : null;
                     bb.TYPE = BasicBlock.TYPE_CONDITIONAL_BRANCH;
                 } else if (t.type.contains("return")) {
                     bb.TYPE = BasicBlock.TYPE_RETURN + BasicBlock.TYPE_STAT;
@@ -144,9 +157,11 @@ public class ControlFlowGraph {
                     bbSwap.predecessors.add(bb);
                     bb.branch = bbSwap;
                     bb.TYPE = BasicBlock.TYPE_GOTO;
+                } else if (t.type.equals("end")) {
+
                 } else {
                     bb.TYPE = BasicBlock.TYPE_STAT;
-                    bb.next = i != this.bbList.size() ? this.bbList.get(i+1) : null;
+                    bb.next = i + 1 != this.bbList.size() ? this.bbList.get(i+1) : null;
                 }
             } else {
                 System.out.println("error with terminators");

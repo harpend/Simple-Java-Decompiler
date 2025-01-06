@@ -62,7 +62,7 @@ public class LoopHelper {
     // Havlak-Tarjan
     private void analyseLoops() {
         this.LP = new ArrayList<>();
-        for (int i = 0; i < this.cfg.bbList.size(); i++) {
+        for (int i = 0; i < this.bbListPreorder.size(); i++) {
             BasicBlock w = this.bbListPreorder.get(i);
             this.backEdges.put(w, new HashSet<>());
             this.otherEdges.put(w, new HashSet<>());

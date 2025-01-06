@@ -93,6 +93,7 @@ public class ClassReader {
                         System.out.print(i+1);
                         System.out.println(element);
                         i++;
+                        list.add(null);
                         break;
                     case CONSTANT_Float:
                         // u1 tag, u4 bytes
@@ -145,6 +146,7 @@ public class ClassReader {
                         System.out.print(i+1);
                         System.out.println(element);
                         i++;                   
+                        list.add(null);
                         break;
                     case CONSTANT_MethodHandle:
                         // u1 tag, u1 reference_kind, u2 reference_index
@@ -375,7 +377,6 @@ public class ClassReader {
 
             int attributeNameIndex = getShort();
             int attributeLength = getInt();
-          
             Dictionary<String, Object> codeInfo = null;
             Dictionary<String, Object> lineNumberTableInfo = null;
             Dictionary<String, Object> stackMapTable = null;
@@ -573,6 +574,13 @@ public class ClassReader {
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "ldc", concatByteToInt(b1), 0), false));
                 pc++;
                 break;
+                case (byte)0x14:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                b1int = concatByteToInt(b2);
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "ldc2_w", b1int, 0), false));
+                pc++;
+                break;
                 case (byte)0x18:
                 b1[0] = codeBytes[++i];
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "dload", concatByteToInt(b1), 0), false));
@@ -716,6 +724,26 @@ public class ClassReader {
                 case (byte)0x87:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "i2d", 0, 0), false));
                 break;
+                case (byte)0x97:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dcmpl", 0, 0), false));
+                break;
+                case (byte)0x98:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dcmpg", 0, 0), false));
+                break;
+                case (byte)0x9C:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                int offset6 = ((b2[0]) << 8) | (b2[1]);
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "ifge", offset6 + pc, 0), true));
+                pc++;pc++;
+                break;
+                case (byte)0x9E:
+                b2[0] = codeBytes[++i];
+                b2[1] = codeBytes[++i];
+                int offset3 = ((b2[0]) << 8) | (b2[1]);
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "ifle", offset3 + pc, 0), true));
+                pc++;pc++;
+                break;
                 case (byte)0xA3:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
@@ -726,15 +754,15 @@ public class ClassReader {
                 case (byte)0xA4:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                int offset3 = ((b2[0]) << 8) | (b2[1]);
-                codeEl.add(cfg.addInstruction( new Instruction(pc, "if_icmple", offset3 +pc, 0), true));
+                int offset4 = ((b2[0]) << 8) | (b2[1]);
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "if_icmple", offset4 +pc, 0), true));
                 pc++;pc++;
                 break;
                 case (byte)0xA7:
                 b2[0] = codeBytes[++i];
                 b2[1] = codeBytes[++i];
-                int offset4 = ((b2[0]) << 8) | (b2[1]);
-                codeEl.add(cfg.addInstruction( new Instruction(pc, "goto", offset4 + pc, 0), true));
+                int offset5 = ((b2[0]) << 8) | (b2[1]);
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "goto", offset5 + pc, 0), true));
                 pc++;pc++;
                 break;
                 case (byte)0xAC:
@@ -817,7 +845,7 @@ public class ClassReader {
             attr = parseAttr(attributesCount);
         }
         cfg.generateCFG();
-        // cfg.stringify();
+        cfg.stringify();
         codeDict.put("max_stack", maxStack);        
         codeDict.put("max_locals", maxLocals);        
         codeDict.put("code", cfg.getInstructions());        
@@ -853,6 +881,15 @@ public class ClassReader {
         return value;
     }
 
+    // private float concatByteToFloat(byte[] bytes) {
+    //     float value = 0;
+    //     for (int i = 0; i < bytes.length; i++) {
+    //         value = (value << 8) | (bytes[i] & 0xFF);
+    //     }
+
+    //     return value;
+    // }
+
     public String ResolveCPIndex(int i) {
         int nameIndex = 0, classIndex = 0, nameAndTypeIndex = 0;
         String tempString = "";
@@ -862,9 +899,15 @@ public class ClassReader {
             case "CONSTANT_Integer":
             case "CONSTANT_Long":
             case "CONSTANT_Float":
-            case "CONSTANT_Double":
             case "CONSTANT_Utf8":
                 tempString = cpEntry.get("bytes");
+                break;
+            case "CONSTANT_Double":
+                long highLong = ((long) Integer.parseInt(cpEntry.get("high_bytes"))) << 32;
+                long lowLong = Integer.parseInt(cpEntry.get("low_bytes")) & 0xFFFFFFFFL;
+                long combined = highLong | lowLong;
+                double value = Double.longBitsToDouble(combined);
+                tempString = Double.toString(value);
                 break;
             case "CONSTANT_Fieldref":
                 classIndex = Integer.parseInt(cpEntry.get("class_index"));

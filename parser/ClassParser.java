@@ -16,7 +16,7 @@ public class ClassParser {
 
         public parser.ast.ClassDeclaration ParseClass() {
             this.cr = new ClassReader();
-            cr.ReadClass("./tests/class/calculator.class");
+            cr.ReadClass("./tests/class/test5.class");
             String flags = String.join(" ", this.cr.accessFlags);
             String name = this.cr.ResolveCPIndex(this.cr.thisClass);
             List<parser.ast.Subroutine> s = parseSubroutines();
@@ -97,6 +97,7 @@ public class ClassParser {
                     oStack.push("local" + i.index1);
                     break;              
                 case "ldc":
+                case "ldc2_w": // can be a float/double and need to account for this
                     oStack.push(this.cr.ResolveCPIndex(i.index1));
                     break;
                 case "dconst_0":
@@ -215,10 +216,16 @@ public class ClassParser {
                         oStack.push("(" + oStack.pop().toString() + ") " + opString + " (" + temp.toString()+")"); 
                     break;
                 
-            
+                case "dcmpl":
+                case "dcmpg":
+                    break;
+                case "ifle":
+                case "iflt":
+                case "ifge":
+                case "ifgt":
                 case "if_icmple":
                 case "if_icmpgt":
-                    parseIfICmp(i, sub);
+                    parseIf(i, sub);
                     break;
                 case "do":
                     sub.finalStack.push("do {");
@@ -283,14 +290,18 @@ public class ClassParser {
             }
         }
 
-        private void parseIfICmp(Instruction i, Subroutine sub) {
+        private void parseIf(Instruction i, Subroutine sub) {
             String item1 = oStack.pop().toString();
             String item2 = oStack.pop().toString();
-            if (i.type.equals("if_icmple")) {
+            if (i.type.equals("if_icmple") || i.type.equals("ifle")) {
                 oStack.push(item2 + " <= " + item1);
-            } else if (i.type.equals("if_icmpgt")) {
+            } else if (i.type.equals("if_icmpgt") || i.type.equals("ifgt")) {
                 oStack.push(item2 + " > " + item1);
-            }
+            } else if (i.type.equals("if_icmpge") || i.type.equals("ifge")) {
+                oStack.push(item2 + " >= " + item1);
+            }  else if (i.type.equals("if_icmplt") || i.type.equals("iflt")) {
+                oStack.push(item2 + " << " + item1);
+            } 
         }
         
         private void parseInvoke(Instruction i, Subroutine sub) {

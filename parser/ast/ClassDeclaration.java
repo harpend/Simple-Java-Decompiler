@@ -31,8 +31,6 @@ public class ClassDeclaration extends astNode {
             Dictionary<String, String> cpEntry = this.cr.constantPool.get(nameIndex-1);
             String name = cpEntry.get("bytes");
             List<String> accessFlags = (List<String>)field.get("access_flags");
-            // cpEntry = this.cr.constantPool.get(signature-1);
-            // type = cpEntry.get("bytes");
             for (Dictionary<String, Object> attr : attrs) {
                 if (attr.get("signature_index") == null) {
                     continue;
@@ -47,7 +45,7 @@ public class ClassDeclaration extends astNode {
                 type = cpp.getType();
             }
 
-            String flags = String.join(" ", this.cr.accessFlags);
+            String flags = String.join(" ", accessFlags);
             s.append(subIndent + flags + " " + type + " " + name + ";\n");
         }
 

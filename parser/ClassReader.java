@@ -408,8 +408,6 @@ public class ClassReader {
 
             el.put("attribute_name_index", attributeNameIndex);
             el.put("attribute_length", attributeLength);
-            System.out.println(el);
-            System.out.println();
             attrList.add(el);
         }
 
@@ -592,8 +590,23 @@ public class ClassReader {
                 case (byte)0x1D:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "iload_3", 3, 0), false));
                 break;
+                case (byte)0x1F:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "lload_0", 0, 0), false));
+                break;
+                case (byte)0x21:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "lload_3", 3, 0), false));
+                break;
+                case (byte)0x23:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "fload_1", 1, 0), false));
+                break;
+                case (byte)0x24:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "fload_2", 2, 0), false));
+                break;
                 case (byte)0x27:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "dload_1", 1, 0), false));
+                break;
+                case (byte)0x29:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dload_3", 3, 0), false));
                 break;
                 case (byte)0x2A:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "aload_0", 0, 0), false));
@@ -636,17 +649,50 @@ public class ClassReader {
                 case (byte)0x60:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "iadd", 0, 0), false));
                 break;
+                case (byte)0x61:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "ladd", 0, 0), false));
+                break;
+                case (byte)0x62:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "fadd", 0, 0), false));
+                break;
                 case (byte)0x63:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "dadd", 0, 0), false));
                 break;
                 case (byte)0x64:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "isub", 0, 0), false));
                 break;
+                case (byte)0x65:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "lsub", 0, 0), false));
+                break;
+                case (byte)0x66:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "fsub", 0, 0), false));
+                break;
+                case (byte)0x67:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dsub", 0, 0), false));
+                break;
                 case (byte)0x68:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "imul", 0, 0), false));
                 break;
+                case (byte)0x69:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "lmul", 0, 0), false));
+                break;
+                case (byte)0x6A:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "fmul", 0, 0), false));
+                break;
+                case (byte)0x6B:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "dmul", 0, 0), false));
+                break;
                 case (byte)0x6C:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "idiv", 0, 0), false));
+                break;
+                case (byte)0x6D:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "ldiv", 0, 0), false));
+                break;
+                case (byte)0x6E:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "fdiv", 0, 0), false));
+                break;
+                case (byte)0x6F:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "ddiv", 0, 0), false));
                 break;
                 case (byte)0x84:
                 if (wide) {
@@ -693,6 +739,12 @@ public class ClassReader {
                 break;
                 case (byte)0xAC:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "ireturn", 0, 0), true));
+                break;
+                case (byte)0xAD:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "lreturn", 0, 0), true));
+                break;
+                case (byte)0xAE:
+                codeEl.add(cfg.addInstruction( new Instruction(pc, "freturn", 0, 0), true));
                 break;
                 case (byte)0xAF:
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "dreturn", 0, 0), true));
@@ -765,7 +817,7 @@ public class ClassReader {
             attr = parseAttr(attributesCount);
         }
         cfg.generateCFG();
-        cfg.stringify();
+        // cfg.stringify();
         codeDict.put("max_stack", maxStack);        
         codeDict.put("max_locals", maxLocals);        
         codeDict.put("code", cfg.getInstructions());        

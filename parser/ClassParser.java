@@ -16,7 +16,7 @@ public class ClassParser {
 
         public parser.ast.ClassDeclaration ParseClass() {
             this.cr = new ClassReader();
-            cr.ReadClass("./tests/class/hashmap.class");
+            cr.ReadClass("./tests/class/calculator.class");
             String flags = String.join(" ", this.cr.accessFlags);
             String name = this.cr.ResolveCPIndex(this.cr.thisClass);
             List<parser.ast.Subroutine> s = parseSubroutines();
@@ -79,6 +79,11 @@ public class ClassParser {
                 case "iload_2":
                 case "iload_3":
                 case "dload_1":
+                case "dload_3":
+                case "fload_1":
+                case "fload_2":
+                case "lload_0":
+                case "lload_3":
                     if (i.index1 > sub.localCount-1){
                         stype = typeFromLoadInstruction(i.type);
                     } else {
@@ -136,12 +141,9 @@ public class ClassParser {
                     sub.finalStack.push("return;");
                     break;
                 case "ireturn":
-                    if (!oStack.empty()) {
-                        s = oStack.pop().toString();
-                        sub.finalStack.push("return " + s + ";");
-                    }
-                    break;
                 case "dreturn":
+                case "freturn":
+                case "lreturn":
                     if (!oStack.empty()) {
                         s = oStack.pop().toString();
                         sub.finalStack.push("return " + s + ";");
@@ -180,12 +182,24 @@ public class ClassParser {
                 case "isub":
                 case "imul":
                 case "idiv":
+                case "dadd":
+                case "dmul":
+                case "dsub":
+                case "ddiv":
+                case "fadd":
+                case "fsub":
+                case "fdiv":
+                case "fmul":
+                case "ladd":
+                case "lsub":
+                case "ldiv":
+                case "lmul":
                     String opString = "";
-                    if (i.type.equals("imul")) {
+                    if (i.type.contains("mul")) {
                         opString = "*";
-                    } else if (i.type.equals("idiv")) {
+                    } else if (i.type.contains("div")) {
                         opString = "/";
-                    } else if (i.type.equals("isub")) {
+                    } else if (i.type.contains("sub")) {
                         opString = "-";
                     } else {
                         opString = "+";
@@ -200,9 +214,7 @@ public class ClassParser {
                     else 
                         oStack.push("(" + oStack.pop().toString() + ") " + opString + " (" + temp.toString()+")"); 
                     break;
-                case "dadd":
-                    oStack.push(oStack.pop().toString() + " + " + oStack.pop().toString());
-                    break;
+                
             
                 case "if_icmple":
                 case "if_icmpgt":
@@ -330,6 +342,8 @@ public class ClassParser {
                     return "int ";
                 case "d": 
                     return "double ";
+                case "f":
+                    return "float ";
                 default:
                     System.out.println("unknown type of load instruction: " + subString);
                     System.exit(1);
@@ -338,8 +352,8 @@ public class ClassParser {
         }
 
         private String typeFromLoadInstruction(String type) {
-            int index = type.indexOf('l');
-            String subString = type.substring(0, index);
+            String subString = type.substring(0, 1);
+
             switch (subString) {
                 case "i":
                     return "int ";
@@ -347,6 +361,10 @@ public class ClassParser {
                     return "double ";
                 case "a":
                     return "";
+                case "f":
+                    return "float ";
+                case "l":
+                    return "long ";
                 default:
                     System.out.println("unknown type of store instruction: " + subString);
                     System.exit(1);
@@ -380,6 +398,9 @@ public class ClassParser {
             }
             if (ret.equals("Z")) {
                 return "boolean";
+            }
+            if (ret.equals("F")) {
+                return "float";
             }
 
             return ret;

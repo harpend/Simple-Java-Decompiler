@@ -284,6 +284,8 @@ public class ClassParser {
                     
                     oStack.push(oStack.pop() + s);
                     break;
+                case "nop":
+                    break;
                 default:
                     System.out.println("type not implemented: " + i.type);
                     System.exit(1);
@@ -300,7 +302,7 @@ public class ClassParser {
             } else if (i.type.equals("if_icmpge") || i.type.equals("ifge")) {
                 oStack.push(item2 + " >= " + item1);
             }  else if (i.type.equals("if_icmplt") || i.type.equals("iflt")) {
-                oStack.push(item2 + " << " + item1);
+                oStack.push(item2 + " < " + item1);
             } 
         }
         

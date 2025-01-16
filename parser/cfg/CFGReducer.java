@@ -1,19 +1,21 @@
 package parser.cfg;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import parser.Instruction;
 import parser.cfg.types.BasicBlock;
 
 public class CFGReducer {
     public static boolean reduceCFG(ControlFlowGraph cfg) {
+        HashMap<BasicBlock, BasicBlock> branch2ifbbMap = new HashMap<>();
         boolean changed = true;
         while (changed) {
             changed = false;
             for (BasicBlock bb : cfg.bbListPostorder) {
                 if (bb.successors.size() == 2) {
                     if (bb.matchType(BasicBlock.TYPE_CONDITIONAL_BRANCH)) {
-                        changed = reduceConditional(bb, cfg);
+                        changed = reduceConditional(bb, cfg, branch2ifbbMap);
                         if (changed)
                             break;
                     } else {
@@ -37,6 +39,11 @@ public class CFGReducer {
         }
 
         if (cfg.bbListPostorder.size() != 1) {
+            cfg.stringify();
+            System.out.println(cfg.bbListPostorder.size());
+            for (BasicBlock t : cfg.bbListPostorder) {
+                System.out.println(t.id);
+            }
             System.out.println("failed to reduce CFG");
             return false;
         }
@@ -44,7 +51,7 @@ public class CFGReducer {
         return true;
     }
 
-    private static boolean reduceConditional(BasicBlock bb, ControlFlowGraph cfg) {
+    private static boolean reduceConditional(BasicBlock bb, ControlFlowGraph cfg, HashMap<BasicBlock, BasicBlock> branch2ifbbMap) {
         if (bb.branch.matchType(BasicBlock.TYPE_RETURN) || bb.branch.matchType(BasicBlock.TYPE_END)) {
             bb.instructions.getLast().flip();
             BasicBlock tmp = bb.branch;
@@ -66,8 +73,15 @@ public class CFGReducer {
                 succ.predecessors.add(ifBB);
                 succ.predecessors.remove(bb);
             }
+            // if any previous if statements are contained within an if statement
+            // there branch must be switched to this new ifbb
+            if (branch2ifbbMap.get(bb.branch) != null) {
+                ifBB.subNodes.add(bb); ifBB.subNodes.add(branch2ifbbMap.get(bb.branch)); ifBB.subNodes.add(bb.next);
+                cfg.bbListPostorder.remove(branch2ifbbMap.get(bb.branch));
+            } else {
+                ifBB.subNodes.add(bb); ifBB.subNodes.add(bb.branch); ifBB.subNodes.add(bb.next);
+            }
 
-            ifBB.subNodes.add(bb); ifBB.subNodes.add(bb.branch); ifBB.subNodes.add(bb.next);
             bb.predecessors.clear();
             bb.next.successors.clear();
             int index = cfg.bbListPostorder.indexOf(bb);
@@ -77,6 +91,7 @@ public class CFGReducer {
             ifBB.next = bb.next.next;
             bb.branch.instructions.addFirst(new Instruction(0, "if", 0, 0));
             bb.next.instructions.addFirst(new Instruction(0, "if_end", 0, 0));
+            branch2ifbbMap.put(bb, ifBB);
         } else {
             // if-else
             if (bb.next.successors.size() > 1 || bb.branch.successors.size() > 1) {

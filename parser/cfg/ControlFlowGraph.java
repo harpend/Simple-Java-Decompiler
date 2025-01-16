@@ -113,6 +113,11 @@ public class ControlFlowGraph {
 
             this.prevInstruction = instruction;
         }
+
+        this.endBB = newTypeBB(BasicBlock.TYPE_END);
+        this.endBB.instructions.add(new Instruction(-1, "nop", 0, 0));
+        this.endBB.type = "end";
+        this.terminators.add(-1);
     }
 
     private void linkBBS() {
@@ -137,11 +142,8 @@ public class ControlFlowGraph {
                     t.type.equals("ifle") || t.type.equals("iflt")) {
                     BasicBlock bbSwap = this.i2bb.get(t.index1);
                     if (bbSwap == null) {
-                        bbSwap = newTypeBB(BasicBlock.TYPE_END);
-                        bbSwap.instructions.add(new Instruction(t.index1, "nop", i, i));
-                        bbSwap.type = "end";
-                        this.bbList.add(bbSwap);
-                        this.terminators.add(t.index1);
+                        bbSwap = this.endBB;
+                        t.index1 = -1;
                     }
 
                     bb.successors.add(bbSwap);
@@ -151,19 +153,22 @@ public class ControlFlowGraph {
                     bb.TYPE = BasicBlock.TYPE_CONDITIONAL_BRANCH;
                 } else if (t.type.contains("return")) {
                     bb.TYPE = BasicBlock.TYPE_RETURN + BasicBlock.TYPE_STAT;
+                    bb.successors.add(this.endBB);
+                    this.endBB.predecessors.add(bb);
                 } else if (t.type.equals("goto")) {
                     BasicBlock bbSwap = this.i2bb.get(t.index1);
                     bb.successors.add(bbSwap);
                     bbSwap.predecessors.add(bb);
                     bb.branch = bbSwap;
                     bb.TYPE = BasicBlock.TYPE_GOTO;
-                } else if (t.type.equals("end")) {
+                } else if (t.type.equals("nop")) {
 
                 } else {
                     bb.TYPE = BasicBlock.TYPE_STAT;
                     bb.next = i + 1 != this.bbList.size() ? this.bbList.get(i+1) : null;
                 }
             } else {
+                System.out.println(t.line);
                 System.out.println("error with terminators");
                 System.exit(1);
             }

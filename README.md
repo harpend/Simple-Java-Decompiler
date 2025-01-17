@@ -32,7 +32,7 @@ for, if-else
 
 ### Stage 4 decompile more complicated programs --TODO
 This would add support for:
-n-way conditionals (switch, (if, else-if, else)) and potentially first class functions
+n-way conditionals (switch, (if, else-if, else)), break/continue in loops, and potentially first class functions
 
 ### Stage 5 write articles explaining how SJD works --TODO
 Hopefully when this is completed I can write some basic tutorials explaining how Java decompilation works and updating as I gain more knowledge.

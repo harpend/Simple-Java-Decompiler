@@ -52,7 +52,7 @@ public class CFGReducer {
     }
 
     private static boolean reduceConditional(BasicBlock bb, ControlFlowGraph cfg, HashMap<BasicBlock, BasicBlock> branch2ifbbMap) {
-        if (bb.branch.matchType(BasicBlock.TYPE_RETURN) || bb.branch.matchType(BasicBlock.TYPE_END)) {
+        if ((bb.branch.matchType(BasicBlock.TYPE_RETURN) || bb.branch.matchType(BasicBlock.TYPE_END)) &&!bb.next.matchType(BasicBlock.TYPE_GOTO)) {
             bb.instructions.getLast().flip();
             BasicBlock tmp = bb.branch;
             bb.branch = bb.next;
@@ -94,7 +94,7 @@ public class CFGReducer {
             branch2ifbbMap.put(bb, ifBB);
         } else {
             // if-else
-            if (bb.next.successors.size() > 1 || bb.branch.successors.size() > 1) {
+            if (bb.branch.successors.size() > 1) {
                 cfg.stringify();
                 System.out.println("too many successors for branch or next");
                 System.exit(1);
@@ -124,9 +124,13 @@ public class CFGReducer {
                 succ.predecessors.remove(bb);
             }
 
+            bb.predecessors.clear();
+            bb.next.successors.clear();
             ifeBB.subNodes.add(bb); ifeBB.subNodes.add(bb.branch); ifeBB.subNodes.add(bb.next);
             bb.branch.instructions.addFirst(new Instruction(0, "if", 0, 0));
-            bb.next.instructions.addFirst(new Instruction(0, "if_end", 0, 0));
+            bb.branch.instructions.addLast(new Instruction(0, "if_end", 0, 0));
+            bb.next.instructions.addFirst(new Instruction(0, "else", 0, 0));
+            bb.next.instructions.addLast(new Instruction(0, "else_end", 0, 0));
             bb.predecessors.clear();
             bb.next.successors.clear();
             bb.branch.successors.clear();
@@ -153,6 +157,10 @@ public class CFGReducer {
             }
 
             BasicBlock statsBB = cfg.newTypeBB(BasicBlock.TYPE_STATEMENTS);
+            if (bb.matchType(BasicBlock.TYPE_GOTO)) {
+                statsBB.TYPE += BasicBlock.TYPE_GOTO;
+            }
+
             statsBB.subNodes.addAll(subs);
             BasicBlock last = statsBB.subNodes.getLast();
             int index = cfg.bbListPostorder.indexOf(last);

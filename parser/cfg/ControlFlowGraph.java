@@ -26,6 +26,7 @@ public class ControlFlowGraph {
     private HashSet<Integer> leaders;
     private HashSet<Integer> fall;
     private boolean fallThrough = false;
+    private boolean gotoChecker = false;
     public BasicBlock head = null;
     private BasicBlock curBB = null;
     private Instruction prevInstruction = null;
@@ -49,9 +50,14 @@ public class ControlFlowGraph {
     }
 
     public Instruction addInstruction(Instruction i, boolean cfChange) {
-        if (fallThrough) {
+        if (this.fallThrough) {
             leaders.add(i.line);
-            fallThrough = false;
+            this.fallThrough = false;
+        }
+        
+        if (this.gotoChecker) {
+            leaders.add(i.line);
+            this.gotoChecker = false;
         }
 
         this.instructions.add(i);
@@ -68,6 +74,7 @@ public class ControlFlowGraph {
                 fallThrough = true;
             } else if (i.type.equals("goto")) {
                 leaders.add(i.index1);
+                this.gotoChecker = true;
             }
         } 
 
@@ -78,6 +85,7 @@ public class ControlFlowGraph {
         generateBBS();
         this.head = this.bbList.getFirst();
         linkBBS(); 
+        removeUnreacableBBs();
         this.bbListPostorder = new ArrayList<>();
         this.bbListPreorder = new ArrayList<>();
         computeDominators();
@@ -157,6 +165,11 @@ public class ControlFlowGraph {
                     this.endBB.predecessors.add(bb);
                 } else if (t.type.equals("goto")) {
                     BasicBlock bbSwap = this.i2bb.get(t.index1);
+                    if (bbSwap == null) {
+                        bbSwap = this.endBB;
+                        t.index1 = -1;
+                    }
+
                     bb.successors.add(bbSwap);
                     bbSwap.predecessors.add(bb);
                     bb.branch = bbSwap;
@@ -208,6 +221,33 @@ public class ControlFlowGraph {
                 }
             }
         } while (changed);
+    }
+
+    private void removeUnreacableBBs() {
+        List<BasicBlock> toRemoveList = new ArrayList<>();
+        for (BasicBlock bb : this.bbList) {
+            if (!bb.equals(this.head) && bb.predecessors.isEmpty()) {
+                toRemoveList.add(bb);
+            }
+        }
+
+        for (BasicBlock bb : toRemoveList) {
+            removeBB(bb);
+        }
+    }
+
+    public void removeBB(BasicBlock bb) {
+        this.bbList.remove(bb);
+        for (BasicBlock succ : bb.successors) {
+            succ.predecessors.remove(bb);
+        }
+
+        for (BasicBlock pred : bb.predecessors) {
+            pred.successors.remove(bb);
+        }
+
+        bb.successors.clear();;
+        bb.predecessors.clear();
     }
 
     public void stringify() {

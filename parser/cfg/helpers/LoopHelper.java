@@ -139,6 +139,9 @@ public class LoopHelper {
     }
 
     private boolean isAncestor(BasicBlock to, BasicBlock from) {
+        this.cfg.stringify();
+        System.out.println(to.id);
+        System.out.println(from.id);
         int toPO = this.number.get(to);
         return ((toPO <= this.number.get(from)) && (this.number.get(from) <= this.lastDesc.get(toPO)));
     }

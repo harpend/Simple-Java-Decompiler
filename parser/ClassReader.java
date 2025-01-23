@@ -580,6 +580,7 @@ public class ClassReader {
                 b1int = concatByteToInt(b2);
                 codeEl.add(cfg.addInstruction( new Instruction(pc, "ldc2_w", b1int, 0), false));
                 pc++;
+                pc++;
                 break;
                 case (byte)0x18:
                 b1[0] = codeBytes[++i];

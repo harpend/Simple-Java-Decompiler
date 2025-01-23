@@ -78,6 +78,8 @@ public class ControlFlowGraph {
             }
         } 
 
+        // for debugging
+        // System.out.println(i.line + " " + i.type+ " " + i.index1);
         return i;
     }
 

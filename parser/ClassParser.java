@@ -245,6 +245,12 @@ public class ClassParser {
                 case "if_end":
                     sub.finalStack.push("}");
                     break;
+                case "else":
+                    sub.finalStack.push("else {");
+                    break;
+                case "else_end":
+                    sub.finalStack.push("}");
+                    break;
                 case "goto":
                     break;
                 case "pop":

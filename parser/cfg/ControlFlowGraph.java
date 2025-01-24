@@ -96,6 +96,7 @@ public class ControlFlowGraph {
         this.lhelper.reduceLoops();
         this.bbListPostorder = this.lhelper.getPostorder();
         boolean reduced = CFGReducer.reduceCFG(this);
+        this.stringify();
         if (!reduced) {
             System.exit(1);
         }

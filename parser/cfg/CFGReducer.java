@@ -128,7 +128,12 @@ public class CFGReducer {
 
             bb.predecessors.clear();
             bb.next.successors.clear();
-            ifeBB.subNodes.add(bb); ifeBB.subNodes.add(bb.branch); ifeBB.subNodes.add(bb.next);
+            if (branch2ifbbMap.get(bb.branch) != null) {
+                ifeBB.subNodes.add(bb); ifeBB.subNodes.add(branch2ifbbMap.get(bb.branch)); ifeBB.subNodes.add(bb.next);
+                cfg.bbListPostorder.remove(branch2ifbbMap.get(bb.branch));
+            } else {
+                ifeBB.subNodes.add(bb); ifeBB.subNodes.add(bb.branch); ifeBB.subNodes.add(bb.next);
+            }
             bb.branch.instructions.addFirst(new Instruction(0, "if", 0, 0));
             bb.branch.instructions.addLast(new Instruction(0, "if_end", 0, 0));
             bb.next.instructions.addFirst(new Instruction(0, "else", 0, 0));
@@ -140,6 +145,7 @@ public class CFGReducer {
             cfg.bbListPostorder.set(index, ifeBB);
             cfg.bbListPostorder.removeAll(ifeBB.subNodes);
             Collections.swap(cfg.bbList, bb.next.id, bb.branch.id);
+            branch2ifbbMap.put(bb, ifeBB);
         }
 
         return true;
@@ -172,14 +178,14 @@ public class CFGReducer {
             statsBB.successors.addAll(bb.successors);
             statsBB.predecessors.addAll(last.predecessors);
             for (BasicBlock basicBlock : bb.successors) {
-                basicBlock.successors.remove(bb);
-                basicBlock.successors.add(statsBB);
+                basicBlock.predecessors.remove(bb);
+                basicBlock.predecessors.add(statsBB);
             }
             
             bb.successors.clear();
             for (BasicBlock basicBlock : last.predecessors) {
-                basicBlock.predecessors.remove(last);
-                basicBlock.predecessors.add(statsBB);
+                basicBlock.successors.remove(last);
+                basicBlock.successors.add(statsBB);
             }
 
             last.predecessors.clear();
@@ -198,6 +204,8 @@ public class CFGReducer {
         while (tmp.successors.size() <= 1 && check) {
             check = false;
             consecBlocks.add(tmp);
+            if (tmp.predecessors.size() != 1)
+                break;
             for (BasicBlock basicBlock : tmp.predecessors) {
                 if (basicBlock.successors.size() == 1 && basicBlock.successors.contains(tmp)) {
                     tmp = basicBlock;

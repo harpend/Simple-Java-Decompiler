@@ -3,6 +3,7 @@ package parser.cfg;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import parser.Instruction;
 import parser.cfg.types.BasicBlock;
@@ -11,6 +12,7 @@ public class CFGReducer {
     public static boolean reduceCFG(ControlFlowGraph cfg) {
         HashMap<BasicBlock, BasicBlock> branch2ifbbMap = new HashMap<>();
         boolean changed = true;
+        // first detect all of the conditional BBs not part of loops and add to List 
         while (changed) {
             changed = false;
             for (BasicBlock bb : cfg.bbListPostorder) {
@@ -52,9 +54,78 @@ public class CFGReducer {
         return true;
     }
 
+    // Here is the general overview of how to implement if decompilation
 
+    // IMPORTANT: check the times when flipping a statemetn
+
+    // 1. You need to set all of the if statments for now this 
+    // is any if statement that isn't part of a loop
+
+    // 2. Iterate through all the basic blocks and reduce it in the predefined order
+
+    // 3. reduce on the following patterns: IFIF, IFELSE, ELSE, IFELSECHAIN, REORDERIF
+    // make sure IFELSE, ELSE, IFELSECHAIN, REORDERIF are called in the correct nesting
+
+    // inspired by vineflower
+    private static boolean reduceIf(BasicBlock bb, ControlFlowGraph cfg, HashSet<BasicBlock> reorderedBBs) {
+        if (!bb.matchType(BasicBlock.TYPE_CONDITIONAL_BRANCH + BasicBlock.TYPE_IF + BasicBlock.TYPE_IF_ELSE)) {
+            return false;
+        }
+
+        boolean reduced = false;
+        if (reduceIfIf(bb)) {
+            reduced = true;
+        } else if (!reorderedBBs.contains(bb)) {
+            if (reduceIfElse(bb)) {
+                reduced = true;
+            } else if (reduceElse(bb)) {
+                reduced = true;
+            } else if (reduceIfElseIfElse(bb)) {
+                reduced = true;
+            }
+        } else if (reorderIf(bb)) {
+            reduced = true;
+        }
+
+        return reduced;
+    }
+
+    private static boolean reduceIfIf(BasicBlock bb) {
+        if (bb.branch.branch!=null) {
+            if (bb.next.equals(bb.branch.next)) {
+                if (bb.branch.branch.matchType(BasicBlock.TYPE_GOTO)) {
+                    // remove bb.brach edges and place them on bb edges
+                } else {
+                    // fill in
+                }
+            }
+
+            // set as subnode and later cobine to &&
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean reduceIfElse(BasicBlock bb) {
+        return false;
+    }
+
+    private static boolean reduceElse(BasicBlock bb) {
+        return false;
+    }
+
+    private static boolean reduceIfElseIfElse(BasicBlock bb) {
+        return false;
+    }
+
+    private static boolean reorderIf(BasicBlock bb) {
+        return false;
+    }
+
+    // depreciated
     private static boolean reduceConditional(BasicBlock bb, ControlFlowGraph cfg, HashMap<BasicBlock, BasicBlock> branch2ifbbMap) {
-        if ((bb.branch.matchType(BasicBlock.TYPE_RETURN) || bb.branch.matchType(BasicBlock.TYPE_END)) &&!bb.next.matchType(BasicBlock.TYPE_GOTO)) {
+        if ((bb.branch.matchType(BasicBlock.TYPE_RETURN) || bb.branch.matchType(BasicBlock.TYPE_END)) &&!bb.next.matchType(BasicBlock.TYPE_GOTO)
+        || bb.branch.predecessors.size() > 1) {
             bb.instructions.getLast().flip();
             BasicBlock tmp = bb.branch;
             bb.branch = bb.next;
